@@ -1,4 +1,5 @@
 local api = require("sysmickit.lua_api")
+local utils = require("sysmickit.utils")
 local M = {}
 
 -- PID presets for different aiming speeds
@@ -14,8 +15,15 @@ local aim_modes = {
 --- @param point table Target position with x, y.
 --- @param mode string One of: "fast", "mid", "slow".
 function M.process(robotId, team, point, mode)
+    local robot = api.get_robot_state(robotId, team)
+    local angle_to_target = math.atan(point.y - robot.y, point.x - robot.x)
+    local angle_diff = utils.angle_diff(robot.orientation, angle_to_target)
+    if angle_diff < 0.1 then
+        return true
+    end
     local preset = aim_modes[mode] or aim_modes.mid  -- default to "mid" if invalid
     api.face_to(robotId, team, point, preset.kp, preset.ki, preset.kd)
+    return false
 end
 
 return M

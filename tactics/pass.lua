@@ -1,75 +1,70 @@
-local api = require("sysmickit.lua_api")
-local kick = require("skills.kick_to_point")
-local move = require("skills.move")
+-- tactics/pass.lua
+local api     = require("sysmickit.lua_api")
+local kick    = require("skills.kick_to_point")
+local move    = require("skills.move")
 local capture = require("skills.capture_ball")
-local aim = require("skills.aim")
-local utils = require("sysmickit.utils")
+local aim     = require("skills.aim")
+local utils   = require("sysmickit.utils")
 local pass_receiver = require("skills.pass_receiver")
-local M = {}
 
--- Internal state
-local state = "init"
-local lastBallPos = { x = 0, y = 0 }
-local kickFrameCounter = 0
+local Pass = {}
+Pass.__index = Pass
 
---- Executes a coordinated pass where the passer prepares to receive and the receiver initiates the pass.
---- @param passerId number Robot who will receive the pass.
---- @param receiverId number Robot who has the ball and initiates the pass.
---- @param team number Team identifier.
---- @param passTarget table { x, y } Where the pass should go (usually the passer's position).
-function M.pass(passerId, receiverId, team, passTarget)
-    local ball = api.get_ball_state()
-    local passer = api.get_robot_state(passerId, team)
+--- Create a new pass tactic instance.
+--- @return Pass
+function Pass.new()
+    return setmetatable({
+        state            = "init",
+        lastBallPos      = { x = 0, y = 0 },
+    }, Pass)
+end
+
+--- Run one step of this pass tactic.
+--- @param passerId number
+--- @param receiverId number
+--- @param team number
+--- @param passTarget table { x, y }
+--- @return boolean true when this cycle is done
+function Pass:process(passerId, receiverId, team, passTarget)
+    local ball     = api.get_ball_state()
+    local passer   = api.get_robot_state(passerId, team)
     local receiver = api.get_robot_state(receiverId, team)
-    if not ball or not passer or not receiver then return false end
+    if not ball or not passer or not receiver then
+        return false
+    end
 
-    -- === INIT: Start pass logic ===
-    if state == "init" then
-        state = "prepare_pass"
-        print("[Pass] Preparing coordinated pass.")
-        lastBallPos = { x = ball.x, y = ball.y }
-        kickFrameCounter = 0
+    if self.state == "init" then
+        self.state            = "prepare_pass"
+        self.lastBallPos      = { x = ball.x, y = ball.y }
         return false
 
-    -- === PREPARE PASS: passer moves into position, receiver prepares to pass ===
-    elseif state == "prepare_pass" then
-        local passer_ready = move.move_to(passerId, team, passTarget)
-        local ball_captured = capture.process(receiverId, team, 10)
-
-        if passer_ready and ball_captured then
-            state = "kick"
-            print("[Pass] Both robots ready. Receiver will kick.")
+    elseif self.state == "prepare_pass" then
+        local in_position = move.move_to(passerId, team, passTarget)
+        local ready2 = capture.process(receiverId, team, 10)
+        local ready1 = false
+        if in_position then
+            ready1 = aim.process(passerId, team, ball, "fast")
+        end
+        if ready1 and ready2 then
+            self.state = "kick"
         end
         return false
 
-    -- === KICK: Receiver kicks ball to passer ===
-    elseif state == "kick" then
+    elseif self.state == "kick" then
+        
         local kicked = kick.process(receiverId, team, passTarget)
-        aim.process(passerId, team, ball, "mid")
         if kicked then
-            print("[Pass] Ball kicked. Passer will intercept.")
-            state = "receive"
-        end
-
-        return false
-
-
-    -- === RECEIVE: Passer intercepts the pass ===
-    elseif state == "receive" then
-        pass_receiver.process(passerId, team)
-
-        if utils.distance(ball, passer) < 0.12 then
-            print("[Pass] Pass complete.")
-            state = "done"
-            return true
+            print("Preparing receive")
+            self.state = "receive"
         end
         return false
 
-    elseif state == "done" then
-        return true
+    elseif self.state == "receive" then
+        local pass_received = pass_receiver.process(passerId, team)
+        return pass_received
     end
 
     return false
 end
 
-return M
+return Pass

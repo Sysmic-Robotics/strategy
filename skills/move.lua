@@ -10,13 +10,15 @@ local position_threshold = 0.05  -- meters
 --- @param target table A table containing target coordinates with keys `x` and `y`.
 --- @return boolean True if robot is close enough to the target, else false.
 function M.move_to(robotId, team, target)
-    api.move_to(robotId, team, target)
-
     local robot = api.get_robot_state(robotId, team)
     if not robot then return false end
 
     local dist = utils.distance(robot, target)
-    return dist < position_threshold
+    if dist < position_threshold then
+        return true
+    end
+    api.move_to(robotId, team, target)
+    return false
 end
 
 return M

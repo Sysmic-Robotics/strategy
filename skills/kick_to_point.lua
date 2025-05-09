@@ -21,7 +21,6 @@ function M.process(robotId, team, target)
         local captured = capture.process(robotId, team, 10)
         if captured then
             state = "align"
-            print("[KickToPoint] Ball captured. Transitioning to align.")
         end
         return false
 
@@ -34,13 +33,11 @@ function M.process(robotId, team, target)
 
         if math.abs(angle_diff) < angle_tolerance then
             state = "kick"
-            print("[KickToPoint] Aligned with target. Transitioning to kick.")
         end
         return false
 
     elseif state == "kick" then
         api.kickx(robotId, team)
-        print("[KickToPoint] Kick executed.")
         state = "capture"  -- Reset for reuse
         return true
     end

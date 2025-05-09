@@ -2,10 +2,11 @@
 local api   = require("sysmickit.lua_api")
 local move  = require("skills.move")
 local aim   = require("skills.aim")
+local utils = require("sysmickit.utils")
 local M     = {}
 
 -- Tunable: max distance the robot will step sideways
-local max_intercept_dist = 0.3  
+local max_intercept_dist = 0.5
 
 --- Lateral intercept: step into the ball’s path without chasing it,
 --- but never more than max_intercept_dist from the robot’s current pos.
@@ -14,15 +15,18 @@ local max_intercept_dist = 0.3
 function M.process(robotId, team)
     local robot = api.get_robot_state(robotId, team)
     local ball  = api.get_ball_state()
-    if not robot or not ball then return end
+    if not robot or not ball then return false end
 
     -- 1) Ball‐velocity vector
     local bvx, bvy = ball.vel_x or 0, ball.vel_y or 0
     local speed = math.sqrt(bvx*bvx + bvy*bvy)
-    if speed == 0 then return end
+    
 
     -- 2) Unit direction of travel
-    local ux, uy = bvx/speed, bvy/speed
+    local ux, uy = 0, 0
+    if speed ~= 0 then
+        ux, uy = bvx/speed, bvy/speed
+    end
 
     -- 3) Compute projection “t” of robot onto that path
     local wx, wy = robot.x - ball.x, robot.y - ball.y
@@ -50,6 +54,11 @@ function M.process(robotId, team)
     -- 8) Face the ball and spin up dribbler
     aim.process(robotId, team, ball, "mid")
     api.dribbler(robotId, team, 7)
+    if utils.distance(robot, ball) < (0.12) then
+        return true
+    end
+
+    return false
 end
 
 return M

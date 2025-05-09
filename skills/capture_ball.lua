@@ -10,18 +10,17 @@ local safe_distance = 0.12  -- desired gap from the ball (in meters)
 local threshold = 0.05      -- distance threshold to consider the target reached
 local angle_tolerance = 0.1 -- radians tolerance to consider the robot is facing the ball
 -- The computed approach target (a table with x and y)
-local approach_target = { x = 0, y = 0 }
+
 --- Process the capture ball state machine.
 --- @param robotId number The ID of the robot.
 --- @param team number The team identifier.
 --- @param dribbleSpeed number Optional dribbler speed (0–10); default is 10.
 function M.process(robotId, team, dribbleSpeed)
     dribbleSpeed = dribbleSpeed or 10
-
+    local approach_target = { x = 0, y = 0 }
     local ball = api.get_ball_state()
     local robot = api.get_robot_state(robotId, team)
     if not ball or not robot then
-        print("[CaptureBall] Error: Missing ball or robot state.")
         return false
     end
 
@@ -45,7 +44,6 @@ function M.process(robotId, team, dribbleSpeed)
         local dist_to_target = utils.distance(robot, approach_target)
         if dist_to_target < threshold and math.abs(angle_diff) < angle_tolerance then
             state = "capture"
-            print("[CaptureBall] Transitioning to capture state.")
         end
         return false
 
@@ -55,10 +53,8 @@ function M.process(robotId, team, dribbleSpeed)
 
         if utils.distance(robot, ball) <= safe_distance then
             state = "idle"
-            print("[CaptureBall] Transitioning to idle state.")
         elseif utils.distance(robot, approach_target) > threshold then
             state = "approach"
-            print("[CaptureBall] Re-approaching ball.")
         end
         return false
 
