@@ -6,7 +6,6 @@ local M = {}
 
 -- Internal state machine
 local state = "capture"
-local angle_tolerance = 0.1  -- radians
 
 --- Executes a kick-to-point skill using a state machine.
 --- @param robotId number
@@ -26,12 +25,9 @@ function M.process(robotId, team, target)
 
     elseif state == "align" then
         api.dribbler(robotId, team, 7)
-        aim.process(robotId, team, target, "slow")
+        local is_aiming = aim.process(robotId, team, target, "slow")
 
-        local angle_to_target = math.atan(target.y - robot.y, target.x - robot.x)
-        local angle_diff = utils.angle_diff(robot.orientation, angle_to_target)
-
-        if math.abs(angle_diff) < angle_tolerance then
+        if is_aiming then
             state = "kick"
         end
         return false

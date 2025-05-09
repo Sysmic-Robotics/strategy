@@ -6,7 +6,7 @@ local utils = require("sysmickit.utils")
 local M     = {}
 
 -- Tunable: max distance the robot will step sideways
-local max_intercept_dist = 0.5
+local max_intercept_dist = 0.2
 
 --- Lateral intercept: step into the ball’s path without chasing it,
 --- but never more than max_intercept_dist from the robot’s current pos.

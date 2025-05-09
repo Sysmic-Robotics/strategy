@@ -18,7 +18,7 @@ function M.process(robotId, team, point, mode)
     local robot = api.get_robot_state(robotId, team)
     local angle_to_target = math.atan(point.y - robot.y, point.x - robot.x)
     local angle_diff = utils.angle_diff(robot.orientation, angle_to_target)
-    if angle_diff < 0.1 then
+    if angle_diff < 0.05 then
         return true
     end
     local preset = aim_modes[mode] or aim_modes.mid  -- default to "mid" if invalid
