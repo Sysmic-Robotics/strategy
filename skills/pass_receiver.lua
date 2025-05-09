@@ -31,7 +31,7 @@ function M.process(robotId, team)
     -- 3) Compute projection “t” of robot onto that path
     local wx, wy = robot.x - ball.x, robot.y - ball.y
     local t = wx*ux + wy*uy
-
+    
     -- 4) Raw intercept point on the infinite path
     local rawX = ball.x + ux * t
     local rawY = ball.y + uy * t
@@ -52,7 +52,7 @@ function M.process(robotId, team)
     move.move_to(robotId, team, interceptPoint)
 
     -- 8) Face the ball and spin up dribbler
-    aim.process(robotId, team, ball, "mid")
+    aim.process(robotId, team, ball, "fast")
     api.dribbler(robotId, team, 7)
     if utils.distance(robot, ball) < (0.12) then
         return true
