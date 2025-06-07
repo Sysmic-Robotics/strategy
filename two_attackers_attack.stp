@@ -1,0 +1,15 @@
+PLAY Two Attackers Attack
+
+APPLICABLE offense
+DONE aborted !offense
+
+ROLE 0
+  pass 1
+END
+
+ROLE 1
+  receive_pass {850, 0} 400
+  shoot {4.5, 0.0}
+END
+
+COORDINATE_PASS(0,1)

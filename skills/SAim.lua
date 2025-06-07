@@ -18,6 +18,7 @@ function M.process(robotId, team, point, mode)
     local robot = api.get_robot_state(robotId, team)
     local angle_to_target = math.atan(point.y - robot.y, point.x - robot.x)
     local angle_diff = utils.angle_diff(robot.orientation, angle_to_target)
+    -- And the angular velocity of the robot is 0
     if angle_diff < 0.05 then
         return true
     end

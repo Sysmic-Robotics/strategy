@@ -1,7 +1,7 @@
 -- pass_receiver.lua
 local api   = require("sysmickit.lua_api")
-local move  = require("skills.move")
-local aim   = require("skills.aim")
+local move  = require("skills.SMove")
+local aim   = require("skills.SAim")
 local utils = require("sysmickit.utils")
 local M     = {}
 
@@ -49,7 +49,7 @@ function M.process(robotId, team)
     end
 
     -- 7) Move purely sideways toward the (clamped) intercept point
-    move.move_to(robotId, team, interceptPoint)
+    move.process(robotId, team, interceptPoint)
 
     -- 8) Face the ball and spin up dribbler
     aim.process(robotId, team, ball, "fast")

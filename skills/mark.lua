@@ -1,7 +1,7 @@
 local api = require("sysmickit.lua_api")
 local utils = require("sysmickit.utils")
-local aim = require("skills.aim")
-local move = require("skills.move")
+local aim = require("skills.SAim")
+local move = require("skills.SMove")
 
 local M = {}
 
@@ -40,7 +40,7 @@ function M.process(robotId, team, target)
     }
 
     -- Move the robot to the mark point
-    move.move_to(robotId, team, markPoint)
+    move.process(robotId, team, markPoint)
 
     -- Face the opponent or ball
     aim.process(robotId, team, targetPos, "mid")
