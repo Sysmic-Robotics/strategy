@@ -1,0 +1,437 @@
+diff --git a/plays/play_attack.lua b/plays/play_attack.lua
+new file mode 100644
+index 0000000000000000000000000000000000000000..2a3a5de248cd84a8c5613e4abab5b9fe11ae103b
+--- /dev/null
++++ b/plays/play_attack.lua
+@@ -0,0 +1,46 @@
++local Attacker  = require("tactics.attacker")
++local Receiver  = require("tactics.receiver")
++local Support   = require("tactics.support")
++local Defender  = require("tactics.defender")
++local api       = require("sysmickit.lua_api")
++
++local PlayAttack = {}
++PlayAttack.__index = PlayAttack
++
++local function mirror(team, pos)
++    if team == 1 then
++        return { x = -pos.x, y = -pos.y }
++    end
++    return pos
++end
++
++function PlayAttack.new()
++    return setmetatable({
++        attacker  = Attacker.new(),
++        receiver  = Receiver.new(),
++        support   = Support.new(),
++        defenders = {
++            Defender.new({ x = -0.6, y = -0.3 }),
++            Defender.new({ x = -0.6, y = 0.3 }),
++            Defender.new({ x = -1.1, y = 0.0 }),
++        },
++    }, PlayAttack)
++end
++
++function PlayAttack:process(team)
++    local ball = api.get_ball_state()
++    if not ball then return end
++
++    self.attacker:process(0, team)
++    self.receiver:process(1, team)
++
++    local supportPos = mirror(team, { x = ball.x - 0.3, y = ball.y })
++    self.support:update_target(supportPos)
++    self.support:process(2, team)
++
++    for i,def in ipairs(self.defenders) do
++        def:process(2 + i, team)
++    end
++end
++
++return PlayAttack
+diff --git a/plays/play_defend.lua b/plays/play_defend.lua
+new file mode 100644
+index 0000000000000000000000000000000000000000..5caeedc87de69cadb7796d35bc6d7f2329c674e2
+--- /dev/null
++++ b/plays/play_defend.lua
+@@ -0,0 +1,50 @@
++local Goalkeeper  = require("tactics.goalkeeper")
++local Defender    = require("tactics.defender")
++local Interceptor = require("tactics.interceptor")
++local Support     = require("tactics.support")
++local api         = require("sysmickit.lua_api")
++
++local PlayDefend = {}
++PlayDefend.__index = PlayDefend
++
++local function mirror(team, pos)
++    if team == 1 then
++        return { x = -pos.x, y = -pos.y }
++    end
++    return pos
++end
++
++function PlayDefend.new()
++    return setmetatable({
++        goalie      = Goalkeeper.new(),
++        defenders   = {
++            Defender.new({ x = -0.8, y = -0.4 }),
++            Defender.new({ x = -0.8, y = 0.4 })
++        },
++        interceptor = Interceptor.new(),
++        supports    = { Support.new(), Support.new() },
++    }, PlayDefend)
++end
++
++function PlayDefend:process(team)
++    local ball = api.get_ball_state()
++    if not ball then return end
++
++    self.goalie:process(0, team)
++    self.interceptor:process(1, team)
++
++    local supportPos1 = mirror(team, { x = ball.x - 0.2, y = ball.y + 0.5 })
++    local supportPos2 = mirror(team, { x = ball.x - 0.2, y = ball.y - 0.5 })
++
++    self.supports[1]:update_target(supportPos1)
++    self.supports[2]:update_target(supportPos2)
++
++    for i,def in ipairs(self.defenders) do
++        def:process(1 + i, team)
++    end
++
++    self.supports[1]:process(3, team)
++    self.supports[2]:process(4, team)
++end
++
++return PlayDefend
+diff --git a/plays/play_selector.lua b/plays/play_selector.lua
+new file mode 100644
+index 0000000000000000000000000000000000000000..7e95dd1a4c64f9d103c81b924b9c32f8db3f835f
+--- /dev/null
++++ b/plays/play_selector.lua
+@@ -0,0 +1,35 @@
++local PlayAttack = require("plays.play_attack")
++local PlayDefend = require("plays.play_defend")
++local api        = require("sysmickit.lua_api")
++local utils      = require("sysmickit.utils")
++
++local Selector = {}
++
++local attack = PlayAttack.new()
++local defend = PlayDefend.new()
++local current = nil
++
++local function we_have_ball(team)
++    local ball = api.get_ball_state()
++    if not ball then return false end
++    for id = 0, 5 do
++        local r = api.get_robot_state(id, team)
++        if r and r.active then
++            if utils.distance(r, ball) < 0.2 then
++                return true
++            end
++        end
++    end
++    return false
++end
++
++function Selector.process(team)
++    if we_have_ball(team) then
++        current = attack
++    else
++        current = defend
++    end
++    current:process(team)
++end
++
++return Selector
+diff --git a/script.lua b/script.lua
+index 6a6675727759ec5b57d69385c3f77262b25e41f5..e6d23e6537eb0140cd5a195adb0f9516cf6acaed 100644
+--- a/script.lua
++++ b/script.lua
+@@ -1,41 +1,9 @@
+-print("Script initialized")
++print("Strategy script initialized")
+ 
++local Selector = require("plays.play_selector")
+ 
+---local mark = require("skills.mark")
+-local kick = require("skills.kick_to_point")
+-local intercept = require("skills.intercept")
+-local Pass = require("tactics.pass")
+-local api = require("sysmickit.lua_api")
+-
+-local team   = 0
+-local A, B   = 0, 1
+-local posA   = { x = -1, y = 0.0 }
+-local posB   = { x =  1, y = 0.0 }
+-
+-local passAB = Pass.new()
+-local passBA = Pass.new()
+-local stage  = 0           -- 0: use passAB, 1: passBA
+-
++local TEAM = 0
+ 
+ function process()
+-  local tactic, from, to, target
+-  if stage == 0 then
+-    tactic = passAB
+-    from, to, target = A, B, posB
+-  else
+-    tactic = passBA
+-    from, to, target = B, A, posA
+-  end
+-
+-  local done = tactic:process(from, to, team, target)
+-  if done then
+-      -- swap stage *and* get a fresh new instance if you prefer
+-      stage = 1 - stage
+-      -- you can also reset by recreating it:
+-      if stage == 0 then
+-        passAB = Pass.new()
+-      else
+-        passBA = Pass.new()
+-      end
+-  end
+-end
+\ No newline at end of file
++    Selector.process(TEAM)
++end
+diff --git a/sysmickit/utils.lua b/sysmickit/utils.lua
+index 07c2eb1e570d42f37ba0f1b368c771e7df93b11c..81d1b4a08f7d179a8b271db44aa0da088dae371b 100644
+--- a/sysmickit/utils.lua
++++ b/sysmickit/utils.lua
+@@ -41,26 +41,26 @@ function M.distance_to_segment(ax, ay, bx, by, cx, cy)
+     local dy = proj_y - cy
+     return math.sqrt(dx * dx + dy * dy)
+ end
+ 
+ --- Verifica si hay obstáculos entre dos puntos (robots contrarios)
+ -- @param passer table {x, y}
+ -- @param receiver table {x, y}
+ -- @param team number (0 o 1)
+ -- @param radius number tolerancia
+ -- @return boolean
+ function M.has_obstacle_between(passer, receiver, team, radius)
+     radius = radius or 0.25
+     for id = 0, 10 do
+         local other = require("sysmickit.lua_api").get_robot_state(id, 1 - team)
+         if other and other.active then
+             local d = M.distance_to_segment(passer.x, passer.y, receiver.x, receiver.y, other.x, other.y)
+             if d < radius then
+                 print("[Obstacle] Robot " .. id .. " bloquea la línea de pase 🚧")
+                 return true
+             end
+         end
+     end
+     return false
+ end
+ 
+-return M
+\ No newline at end of file
++return M
+diff --git a/tactics/attacker.lua b/tactics/attacker.lua
+new file mode 100644
+index 0000000000000000000000000000000000000000..a471a3e57a7c04cbf452b992accfa770c1dbd21b
+--- /dev/null
++++ b/tactics/attacker.lua
+@@ -0,0 +1,38 @@
++local api     = require("sysmickit.lua_api")
++local capture = require("skills.capture_ball")
++local aim     = require("skills.aim")
++local kick    = require("skills.kick_to_point")
++
++local Attacker = {}
++Attacker.__index = Attacker
++
++function Attacker.new()
++    return setmetatable({ state = "capture" }, Attacker)
++end
++
++function Attacker:process(robotId, team)
++    local goal = team == 0 and { x = 1.4, y = 0 } or { x = -1.4, y = 0 }
++    if self.state == "capture" then
++        local has = capture.process(robotId, team, 10)
++        if has then
++            self.state = "aim"
++        end
++        return false
++    elseif self.state == "aim" then
++        local ready = aim.process(robotId, team, goal, "fast")
++        if ready then
++            self.state = "kick"
++        end
++        return false
++    elseif self.state == "kick" then
++        local done = kick.process(robotId, team, goal)
++        if done then
++            self.state = "capture"
++            return true
++        end
++        return false
++    end
++    return false
++end
++
++return Attacker
+diff --git a/tactics/defender.lua b/tactics/defender.lua
+new file mode 100644
+index 0000000000000000000000000000000000000000..2af61b8dd2eea680fe7df3c2618b024e34f87ee1
+--- /dev/null
++++ b/tactics/defender.lua
+@@ -0,0 +1,39 @@
++local api       = require("sysmickit.lua_api")
++local face_move = require("skills.face_ball_while_move")
++local mark      = require("skills.mark")
++
++local Defender = {}
++Defender.__index = Defender
++
++function Defender.new(home)
++    return setmetatable({ home = home or { x = -1.0, y = 0.0 }, offset = home and home.offset or 0 }, Defender)
++end
++
++local function mirror(team, pos)
++    if team == 1 then
++        return { x = -pos.x, y = -pos.y }
++    end
++    return pos
++end
++
++function Defender:process(robotId, team)
++    local ball = api.get_ball_state()
++    if not ball then return end
++
++    local ownHalf = (team == 0 and ball.x < 0) or (team == 1 and ball.x > 0)
++    local target
++    if ownHalf then
++        local gx = team == 0 and -1.4 or 1.4
++        target = { x = gx, y = ball.y + (self.offset or 0) }
++        mark.process(robotId, team, target)
++    else
++        target = mirror(team, self.home)
++    end
++    if not self.mover then
++        self.mover = face_move.new(target)
++    end
++    self.mover.target = target
++    self.mover:process(robotId, team)
++end
++
++return Defender
+diff --git a/tactics/goalkeeper.lua b/tactics/goalkeeper.lua
+new file mode 100644
+index 0000000000000000000000000000000000000000..051dcf78c6bc8a1449be2b65ac907712d0a89b53
+--- /dev/null
++++ b/tactics/goalkeeper.lua
+@@ -0,0 +1,35 @@
++local api       = require("sysmickit.lua_api")
++local move      = require("skills.move")
++local aim       = require("skills.aim")
++local clear     = require("skills.clear_ball")
++local utils     = require("sysmickit.utils")
++
++local Goalkeeper = {}
++Goalkeeper.__index = Goalkeeper
++
++function Goalkeeper.new()
++    return setmetatable({ state = "guard" }, Goalkeeper)
++end
++
++function Goalkeeper:process(robotId, team)
++    local ball = api.get_ball_state()
++    if not ball then return end
++    local goalX = team == 0 and -1.5 or 1.5
++    local guardPos = { x = goalX, y = ball.y }
++
++    if self.state == "guard" then
++        move.move_to(robotId, team, guardPos)
++        aim.process(robotId, team, ball, "fast")
++        if utils.distance(guardPos, ball) < 0.3 then
++            self.state = "clear"
++            self.clearer = clear.new(team)
++        end
++    elseif self.state == "clear" then
++        local done = self.clearer:process(robotId, team)
++        if done then
++            self.state = "guard"
++        end
++    end
++end
++
++return Goalkeeper
+diff --git a/tactics/interceptor.lua b/tactics/interceptor.lua
+new file mode 100644
+index 0000000000000000000000000000000000000000..bf238bedc906fc5d3fb058dc46d90fa1f13e0419
+--- /dev/null
++++ b/tactics/interceptor.lua
+@@ -0,0 +1,19 @@
++local api       = require("sysmickit.lua_api")
++local intercept = require("skills.intercept")
++local aim       = require("skills.aim")
++
++local Interceptor = {}
++Interceptor.__index = Interceptor
++
++function Interceptor.new()
++    return setmetatable({}, Interceptor)
++end
++
++function Interceptor:process(robotId, team)
++    local ball = api.get_ball_state()
++    if not ball then return end
++    intercept.process(robotId, team, { x = ball.x, y = ball.y })
++    aim.process(robotId, team, ball, "fast")
++end
++
++return Interceptor
+diff --git a/tactics/support.lua b/tactics/support.lua
+new file mode 100644
+index 0000000000000000000000000000000000000000..f66fc67ad55b17ec9bff66aee2d012072da0dbbd
+--- /dev/null
++++ b/tactics/support.lua
+@@ -0,0 +1,42 @@
++local api     = require("sysmickit.lua_api")
++local dribble = require("skills.dribble_to_point")
++local capture = require("skills.capture_ball")
++local move    = require("skills.move")
++
++local Support = {}
++Support.__index = Support
++
++function Support.new(target)
++    return setmetatable({ target = target or { x = 0, y = 0 }, state = "move", drib = nil }, Support)
++end
++
++function Support:update_target(target)
++    self.target = target
++    if self.drib then
++        self.drib.target = target
++    end
++end
++
++function Support:process(robotId, team)
++    local ball = api.get_ball_state()
++    if not ball then return end
++    if self.state == "move" then
++        move.move_to(robotId, team, self.target)
++        if api.get_robot_state(robotId, team) then
++            if math.abs(api.get_robot_state(robotId, team).x - self.target.x) < 0.1 and
++               math.abs(api.get_robot_state(robotId, team).y - self.target.y) < 0.1 then
++                self.state = "capture"
++            end
++        end
++    elseif self.state == "capture" then
++        if not self.drib then
++            self.drib = dribble.new(self.target)
++        end
++        local done = self.drib:process(robotId, team)
++        if done then
++            self.state = "move"
++        end
++    end
++end
++
++return Support

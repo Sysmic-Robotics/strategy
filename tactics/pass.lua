@@ -49,9 +49,9 @@ function Pass:process(passerId, receiverId, team, passTarget)
             self.state = "kick"
         end
         return false
-    
+
     elseif self.state == "kick" then
-        
+
         local kicked = kick.process(receiverId, team, passer)
         if kicked then
             print("Preparing receive")

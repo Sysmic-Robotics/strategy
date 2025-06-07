@@ -20,7 +20,7 @@ function M.process(robotId, team)
     -- 1) Ball‐velocity vector
     local bvx, bvy = ball.vel_x or 0, ball.vel_y or 0
     local speed = math.sqrt(bvx*bvx + bvy*bvy)
-    
+
 
     -- 2) Unit direction of travel
     local ux, uy = 0, 0
@@ -31,7 +31,7 @@ function M.process(robotId, team)
     -- 3) Compute projection “t” of robot onto that path
     local wx, wy = robot.x - ball.x, robot.y - ball.y
     local t = wx*ux + wy*uy
-    
+
     -- 4) Raw intercept point on the infinite path
     local rawX = ball.x + ux * t
     local rawY = ball.y + uy * t
