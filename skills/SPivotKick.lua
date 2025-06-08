@@ -15,7 +15,6 @@ function M.process(robotId, team, target)
     end
 
     if SCapture.process(robotId, team) then
-        print("kicking")
         SKick.process(0,0)
         return true
     end

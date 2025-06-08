@@ -15,7 +15,7 @@ function utils.is_ready_to_kick(robot, ball, target)
     if (ball_pos - robot_pos):length() > SAFE_DISTANCE then
         return false
     end
-    local desired_dir = (target_pos - robot_pos):normalized()
+    local desired_dir = (ball - robot_pos):normalized()
     local robot_dir = Vector2D.new(math.cos(robot.orientation), math.sin(robot.orientation))
     local angle_diff = desired_dir:angle_to(robot_dir)
     if math.abs(angle_diff) > ANGLE_TOLERANCE then
