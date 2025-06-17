@@ -8,7 +8,7 @@ local M = {}
 --- @param robotId number The ID of the robot.
 --- @param team number The team identifier.
 --- @return boolean True if robot is close enough to the target, else false.
-function M.process(robotId, team)
+function M.process(robotId, team, point)
     local ball = api.get_ball_state()
     if not ball then return false end
     SMoveDirect.process(robotId,team, ball)
