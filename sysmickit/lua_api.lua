@@ -12,6 +12,17 @@ function LuaAPI.move_to(robotId, team, point)
     move_to(robotId, team, point)
 end
 
+--- Moves the specified robot to the given point without planning.
+---
+--- @param robotId number The ID of the robot.
+--- @param team number The team identifier.
+--- @param point table A table containing the target coordinates with keys `x` and `y`.
+--- @return nil
+function LuaAPI.move_direct(robotId, team, point)
+    
+    move_direct(robotId, team, point)
+end
+
 ---
 --- Returns a table representing the robot's state.
 ---
@@ -29,8 +40,30 @@ end
 --- @param team number The team identifier.
 --- @return table The robot state table.
 function LuaAPI.get_robot_state(robotId, team)
+    if type(robotId) ~= "number" then
+        error("[LuaAPI] Invalid robotId: expected number, got " .. type(robotId), 2)
+    end
+    if type(team) ~= "number" then
+        error("[LuaAPI] Invalid team: expected number, got " .. type(team), 2)
+    end
+
     return get_robot_state(robotId, team)
 end
+
+--- Get the positions of all robots on a team (only 2 robots: ID 0 and 1)
+--- @return table A list of robot positions { {x, y}, {x, y} }
+function LuaAPI.get_all_robots_positions()
+    local robots = {}
+    local team = 1
+    for id = 0, 1 do
+        local result = LuaAPI.get_robot_state(id, team)
+        if result and result.x and result.y then
+            table.insert(robots, { x = result.x, y = result.y })
+        end
+    end
+    return robots
+end
+
 
 ---
 --- Rotates the robot to face a target point using a PID controller.
