@@ -33,24 +33,31 @@ function LuaAPI.get_robot_state(robotId, team)
 end
 
 ---
---- Rotates the robot to face the specified target coordinates.
----
 --- Rotates the robot to face a target point using a PID controller.
----
 --- @param robotId number The ID of the robot.
 --- @param team number The team identifier.
---- @param point table A table containing the target coordinates with keys `x` and `y`.
---- @param kp number? (optional) Proportional gain. Default is 1.0.
---- @param ki number? (optional) Integral gain. Default is 1.0.
---- @param kd number? (optional) Derivative gain. Default is 0.1.
---- @return nil
+--- @param point table A table with `x` and `y` coordinates.
+--- @param kp number? Proportional gain (default: 1.0).
+--- @param ki number? Integral gain (default: 1.0).
+--- @param kd number? Derivative gain (default: 0.1).
 function LuaAPI.face_to(robotId, team, point, kp, ki, kd)
-    kp = kp or 1.0
-    ki = ki or 1.0
-    kd = kd or 0.1
+    -- Default PID values
+    kp = tonumber(kp) or 1.0
+    ki = tonumber(ki) or 1.0
+    kd = tonumber(kd) or 0.1
+
+    -- Validate inputs
+    if type(robotId) ~= "number" or type(team) ~= "number" then
+        error("Invalid robotId or team: both must be numbers")
+    end
+
+    if type(point) ~= "table" or type(point.x) ~= "number" or type(point.y) ~= "number" then
+        error("Invalid point: must be a table with numeric 'x' and 'y'")
+    end
+
+    -- Call the native base function
     face_to(robotId, team, point, kp, ki, kd)
 end
-
 
 ---
 --- Returns a table representing the ball's state.

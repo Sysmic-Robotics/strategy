@@ -16,7 +16,7 @@ local angle_tolerance = 0.1 -- radians tolerance to consider the robot is facing
 --- @param team number The team identifier.
 --- @param dribbleSpeed number Optional dribbler speed (0–10); default is 10.
 function M.process(robotId, team, dribbleSpeed)
-    dribbleSpeed = dribbleSpeed or 10
+    dribbleSpeed = dribbleSpeed or 7
     local approach_target = { x = 0, y = 0 }
     local ball = api.get_ball_state()
     local robot = api.get_robot_state(robotId, team)
