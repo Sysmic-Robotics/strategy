@@ -12,6 +12,19 @@ function LuaAPI.move_to(robotId, team, point)
     move_to(robotId, team, point)
 end
 
+---
+--- Moves the specified robot to the given point.
+---
+--- @param robotId number The ID of the robot.
+--- @param team number The team identifier.
+--- @param point table A table containing the target coordinates with keys `x` and `y`.
+--- @param kp_vel number 
+--- @param ki_vel number
+--- @return nil
+function LuaAPI.motion(robotId, team, point, kp_vel, ki_vel)
+    motion(robotId, team, point, kp_vel, ki_vel)
+end
+
 --- Moves the specified robot to the given point without planning.
 ---
 --- @param robotId number The ID of the robot.
