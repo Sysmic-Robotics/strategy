@@ -11,7 +11,7 @@ kp_vel = 0.5
 ki_vel = 0.01
 
 function process()
-  api.motion(robotId, team, point, kp_vel, ki_vel)
+  --api.motion(robotId, team, point, kp_vel, ki_vel)
    --api.move_to(robotId, team, point)
-  --send_velocity(robotId,team,0.0,0.0,0.9)
+  send_velocity(robotId,team,0.0,0,0.0)
 end

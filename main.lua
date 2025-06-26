@@ -1,10 +1,17 @@
-local SCaptureBall = require("skills.SCaptureBall")
--- Initialize FSM to move robot 0 of team 0 to (1.5, -2.0)
-local robot_id = 0
-local team_id = 0
+print("Script initialized")
 
--- Optional: enable debug messages
-local capture_ball = SCaptureBall.new(robot_id, team_id)
+local api = require("sysmickit.lua_api")
+
+robotId = 0
+team = 0
+point = {
+    x= 0.0 , y=0.0
+}
+kp_vel = 0.5
+ki_vel = 0.01
+
 function process()
-    capture_ball:update()
+  --api.motion(robotId, team, point, kp_vel, ki_vel)
+   --api.move_to(robotId, team, point)
+  send_velocity(robotId,team,0.5,0.0, 0.0)
 end
