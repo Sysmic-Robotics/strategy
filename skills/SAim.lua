@@ -4,6 +4,9 @@ local FSM = require("sysmickit.fsm")
 
 local M = {}
 
+-- Store FSM instances per robot/team
+local instances = {}
+
 
 
 -- PID presets
@@ -56,6 +59,26 @@ function M.new(robotId, team, point, mode)
     fsm:set_done_state("done")
 
     return fsm
+end
+
+--- Convenience helper that runs the FSM every cycle.
+--  Internally stores one FSM per robot/team.
+--  @return boolean true when the rotation is finished
+function M.process(robotId, team, point, mode)
+    local key = robotId .. ":" .. team
+    local fsm = instances[key]
+    if not fsm then
+        fsm = M.new(robotId, team, point, mode)
+        instances[key] = fsm
+    end
+
+    fsm:update()
+
+    if fsm:is_done() then
+        instances[key] = nil
+        return true
+    end
+    return false
 end
 
 return M

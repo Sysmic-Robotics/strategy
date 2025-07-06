@@ -4,6 +4,8 @@ local FSM = require("sysmickit.fsm")
 
 local M = {}
 
+local instances = {}
+
 local DEFAULT_POSITION_THRESHOLD = 0.05
 
 --- Creates an FSM that moves a robot to a given target.
@@ -49,6 +51,25 @@ function M.new(robotId, team, target)
     fsm:set_done_state("done")
 
     return fsm
+end
+
+--- Run the movement FSM every cycle.
+--  Returns true when target is reached.
+function M.process(robotId, team, target)
+    local key = robotId .. ":" .. team
+    local fsm = instances[key]
+    if not fsm then
+        fsm = M.new(robotId, team, target)
+        instances[key] = fsm
+    end
+
+    fsm:update()
+
+    if fsm:is_done() then
+        instances[key] = nil
+        return true
+    end
+    return false
 end
 
 return M

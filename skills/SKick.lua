@@ -11,9 +11,9 @@ local M = {}
 function M.process(robotId, team, point)
     local ball = api.get_ball_state()
     if not ball then return false end
-    SMoveDirect.process(robotId,team, ball)
+    SMoveDirect.process(robotId, team, ball)
     api.kickx(robotId, team)
-    api.dribbler(0,0,1)
+    api.dribbler(robotId, team, 1)
     return true
 end
 
