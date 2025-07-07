@@ -80,7 +80,7 @@ end
 function LuaAPI.face_to(robotId, team, point, kp, ki, kd)
     kp = kp or 1.0
     ki = ki or 1.0
-    kd = kd or 0.1
+    kd = kd or 0.0
     face_to(robotId, team, point, kp, ki, kd)
 end
 
