@@ -1,10 +1,8 @@
-local SCaptureBall = require("skills.SCaptureBall")
--- Initialize FSM to move robot 0 of team 0 to (1.5, -2.0)
-local robot_id = 0
-local team_id = 0
+local Robot = require("sysmickit.robot")
 
--- Optional: enable debug messages
-local capture_ball = SCaptureBall.new(robot_id, team_id)
+local robot = Robot.new(0,0)
 function process()
-    capture_ball:update()
+    --robot:Move({x=0,y=0})
+    --robot:KickToPoint({x=0,y=0})
+    robot:CaptureBall()
 end

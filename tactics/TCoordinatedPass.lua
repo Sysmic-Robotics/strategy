@@ -55,13 +55,13 @@ function CoordinatedPass:process(passerId, receiverId, team, region)
         -- Passer: Capture the ball and aim to the pass target
         local ready = 0
         if SCapture.process(passerId, team) then
-           if Saim.process(passerId, team, self.computedTarget, "slow") then
+           if Saim.process(passerId, team, self.computedTarget) then
                 ready = ready + 1
            end
         end
         -- Receiver: Capture the ball and aim to the ball
         if SMove.process(receiverId, team, self.computedTarget) then
-            if Saim.process(receiverId, team, ball, "fast") then
+            if Saim.process(receiverId, team, ball) then
                 ready = ready + 1
             end
         end

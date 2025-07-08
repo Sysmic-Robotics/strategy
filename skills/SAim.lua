@@ -1,61 +1,30 @@
-local api = require("sysmickit.lua_api")
+local Engine = require("sysmickit.lua_api")
 local utils = require("sysmickit.utils")
-local FSM = require("sysmickit.fsm")
 
-local M = {}
+local Aim = {}
 
+local DEFAULT_ORIENTATION_THRESHOLD = 0.05  -- radians
 
+--- @param id number Robot id
+--- @param team number Robot team
+--- @param target table {x, y} Point to aim at
+function Aim.process(id, team, target)
+    local robot = Engine.get_robot_state(id, team)
+    if not robot then return false end
 
--- PID presets
-local aim_modes = {
-    fast = { kp = 1.0, ki = 1.0, kd = 0.1 },
-    mid  = { kp = 0.5, ki = 0.5, kd = 0.05 },
-    slow = { kp = 0.25, ki = 0.25, kd = 0.025 },
-}
+    -- Calculate angle from robot to target
+    local dx = target.x - robot.x
+    local dy = target.y - robot.y
+    local target_angle = math.atan(dy, dx)
 
---- Creates an FSM to rotate a robot to face a target point.
---- @param robotId number
---- @param team number
---- @param point table {x, y}
---- @param mode string ("fast", "mid", "slow")
---- @return FSM
-function M.new(robotId, team, point, mode)
-    local fsm = FSM.new("rotate", "[SAim]")
-    local preset = aim_modes[mode] or aim_modes.mid
+    local angle_diff = utils.angle_diff(robot.orientation, target_angle)
 
-    fsm:add_state("rotate", {
-        update = function(self)
-            local robot = api.get_robot_state(robotId, team)
-            if not robot then return end
+    if math.abs(angle_diff) <= DEFAULT_ORIENTATION_THRESHOLD then
+        return true
+    end
 
-            local angle_to_target = math.atan(point.y - robot.y, point.x - robot.x)
-            local angle_diff = utils.angle_diff(robot.orientation, angle_to_target)
-
-            if math.abs(angle_diff) < 0.05 then
-                self:change_state("done")
-            else
-                api.face_to(robotId, team, point, preset.kp, preset.ki, preset.kd)
-            end
-        end
-    })
-
-    fsm:add_state("done", {
-        update = function(self)
-            local robot = api.get_robot_state(robotId, team)
-            if not robot then return end
-
-            local angle_to_target = math.atan(point.y - robot.y, point.x - robot.x)
-            local angle_diff = utils.angle_diff(robot.orientation, angle_to_target)
-
-            if math.abs(angle_diff) >= 0.05 then
-                self:change_state("rotate")
-            end
-        end
-    })
-
-    fsm:set_done_state("done")
-
-    return fsm
+    Engine.face_to(id, team, target)
+    return false
 end
 
-return M
+return Aim
