@@ -48,4 +48,25 @@ function M.new(robotId, team, target)
     return fsm
 end
 
+local fsm_instances = {}
+
+--- Procesa el movimiento directo de un robot hacia un objetivo.
+--- @param robotId number
+--- @param team number
+--- @param target table {x, y}
+function M.process(robotId, team, target)
+    local key = tostring(robotId) .. ":" .. tostring(team)
+    if not fsm_instances[key] then
+        fsm_instances[key] = M.new(robotId, team, target)
+    end
+    local fsm = fsm_instances[key]
+    -- Actualiza el target si cambió
+    if fsm.target ~= target then
+        fsm = M.new(robotId, team, target)
+        fsm_instances[key] = fsm
+    end
+    fsm:update()
+    return fsm:is_done()
+end
+
 return M
