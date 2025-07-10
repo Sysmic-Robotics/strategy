@@ -132,8 +132,8 @@ function LuaAPI.dribbler(robotId, team, speed)
     if speed < 0 then
         speed = 0
     end
-    if speed > 7 then
-        speed = 7
+    if speed > 5 then
+        speed = 5
     end
     dribbler(robotId, team, speed)
 end

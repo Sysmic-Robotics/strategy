@@ -4,7 +4,7 @@ local Vector2D = require("sysmickit.vector2D")
 local SMove = require("skills.SMove")
 local SAim = require("skills.SAim")
 local SMoveDirect = require("skills.SMoveDirect")
-
+local approach_vel = 0.2
 local M = {}
 
 local SAFE_DISTANCE = 0.18  -- Desired distance to ball
@@ -33,10 +33,15 @@ function M.process(robotId, team)
         SMove.process(robotId, team, robot_to_ball)
     else
         -- Make sure to always approach the ball while is aiming
-        if SAim.process(robotId, team, ball, "medium") then
-            SMoveDirect.process(robotId, team, ball)
-        end
-        api.dribbler(robotId, team, 10)
+        api.dribbler(robotId, team, 3)
+        face_to(robotId,team,ball,4,0.7,0.0)
+        send_velocity(robotId,team,approach_vel,0,0)
+        --if SAim.process(robotId, team, ball, "fast") then
+
+        --    motion(robotId, team, ball,2,1,2,1)
+            --SMoveDirect.process(robotId, team, ball)
+        --end
+        --api.dribbler(robotId, team, 10)
     end
 
     return false

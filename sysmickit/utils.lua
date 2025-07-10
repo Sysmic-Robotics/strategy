@@ -32,7 +32,7 @@ function utils.has_captured_ball(robot, ball)
     local robot_pos = Vector2D.new(robot.x, robot.y)
     local ball_pos = Vector2D.new(ball.x, ball.y)
     local to_ball = ball_pos - robot_pos
-    local CAPTURE_RADIUS = 0.12 -- Robot radius + ball radius + small margin
+    local CAPTURE_RADIUS = 0.10 -- Robot radius + ball radius + small margin
     -- Check distance
     if to_ball:length_squared() > CAPTURE_RADIUS * CAPTURE_RADIUS then
         return false

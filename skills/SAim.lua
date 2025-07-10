@@ -4,7 +4,7 @@ local M = {}
 
 -- PID presets for different aiming speeds
 local aim_modes = {
-    fast = { kp = 1.0, ki = 1.0, kd = 0.1 },
+    fast = { kp = 4, ki = 0.7, kd = 0.0 },
     mid  = { kp = 0.5, ki = 0.5, kd = 0.05 },
     slow = { kp = 0.25, ki = 0.25, kd = 0.025 },
 }

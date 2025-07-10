@@ -22,6 +22,7 @@ function M.process(robotId, team, target, threshold)
     end
 
     api.move_to(robotId, team, target)
+    api.face_to(robotId, team, target)
     return false
 end
 
