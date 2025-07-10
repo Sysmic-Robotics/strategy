@@ -4,6 +4,7 @@ local utils      = require("sysmickit.utils")
 local SCapture    = require("skills.SCaptureBall")      -- Updated to non-class capture_ball
 local SPivotAim  = require("skills.SPivotAim")
 local SKick = require("skills.SKick")
+local SMoveDirect = require("skills.SMoveDirect")
 local M = {}
 --- Main process function
 -- @param robotId number The ID of the robot
@@ -15,7 +16,7 @@ function M.process(robotId, team, target)
     end
 
     if SCapture.process(robotId, team) then
-        SKick.process(0,0)
+        SMoveDirect.process(robotId,team,target)
         return true
     end
     return false

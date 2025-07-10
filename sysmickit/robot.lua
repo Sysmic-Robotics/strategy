@@ -10,6 +10,7 @@ local Mark          = require("skills.mark")
 local PassReceiver  = require("skills.pass_receiver")
 local KickToPoint   = require("skills.kick_to_point")
 local SCircleAroundBall = require("skills.SCircleAroundBall")
+local SDribbleMove = require("skills.SDribbleMove")
 local Robot = {}
 Robot.__index = Robot
 
@@ -66,4 +67,8 @@ end
 function Robot:SCircleAroundBall(direction)
     return SCircleAroundBall.process(self.id,self.team,direction)
 end
+function Robot:SDribbleMove(target)
+    return SDribbleMove.process(self.id,self.team,target)
+end
+
 return Robot

@@ -6,7 +6,7 @@ local M = {}
 
 -- Parámetros configurables
 local RADIUS = 0.15   -- Radio de giro en metros
-local ANGULAR_SPEED = 0.012 -- Velocidad angular (radianes por frame)
+local ANGULAR_SPEED = 0.03 -- Velocidad angular (radianes por frame)
 
 -- Estado por robot
 local states = {}
