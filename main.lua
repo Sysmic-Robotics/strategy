@@ -15,6 +15,7 @@ function process()
     -- robot:Mark({id=1,team=1})
     -- robot:PassReceiver(0,0)
     -- robot:KickToPoint({x=3, y=0})
-    robot:SDribbleMove({x=1, y=0})
+    --robot:SDribbleMove({x=0, y=0})
     --robot:SCircleAroundBall(1)
+    robot:SQuickShot({x=0,y=0})
 end
