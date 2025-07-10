@@ -13,7 +13,7 @@ function M.process(robotId, team, point)
     if not ball then return false end
     SMoveDirect.process(robotId,team, ball)
     api.kickx(robotId, team)
-    api.dribbler(0,0,1)
+    api.dribbler(robotId,team,1)
     return true
 end
 
