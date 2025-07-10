@@ -7,7 +7,7 @@ local SMoveDirect = require("skills.SMoveDirect")
 
 local M = {}
 
-local SAFE_DISTANCE = 0.18  -- Desired distance to ball
+local SAFE_DISTANCE = 0.08  -- Desired distance to ball
 
 --- Main process function
 -- @param robotId number The ID of the robot
