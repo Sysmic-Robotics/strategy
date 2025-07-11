@@ -7,7 +7,7 @@ local SCapture = require("skills.SCaptureBall")
 local Saim     = require("skills.SAim")
 local pass_receiver = require("skills.pass_receiver")
 local PassPointSolver = require("AI.pass_point_solver")
-
+local SPivotAim = require("skills.SPivotAim")
 local CoordinatedPass = {}
 CoordinatedPass.__index = CoordinatedPass
 
@@ -54,10 +54,8 @@ function CoordinatedPass:process(passerId, receiverId, team, region)
     elseif self.state == "prepare_pass" then
         -- Passer: Capture the ball and aim to the pass target
         local ready = 0
-        if SCapture.process(passerId, team) then
-           if Saim.process(passerId, team, self.computedTarget) then
-                ready = ready + 1
-           end
+        if SPivotAim.process(passerId, team, self.computedTarget) then
+            ready = ready + 1
         end
         -- Receiver: Capture the ball and aim to the ball
         if SMove.process(receiverId, team, self.computedTarget) then
@@ -68,6 +66,8 @@ function CoordinatedPass:process(passerId, receiverId, team, region)
 
         if ready >= 2 then
             self.state = "kick"
+        else
+            self.state = "prepare_pass"
         end
 
         return false
