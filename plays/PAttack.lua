@@ -2,6 +2,8 @@ local api = require("sysmickit.lua_api")
 local utils = require("sysmickit.utils")
 local kick = require("skills.kick_to_point")
 local capture = require("skills.SCaptureBall")
+local move = require("skills.SMove")
+local coordinated_pass = require("tactics.TCoordinatedPass")
 local Vector2D = require("sysmickit.vector2D")
 
 local PAttack = {}
@@ -9,12 +11,10 @@ PAttack.__index = PAttack
 
 local GOAL_POS = { x = 4.5, y = 0 }
 
--- Función auxiliar local para saber quién tiene la pelota
 local function who_has_ball(team)
     local allies = api.get_allies(team)
     local ball = api.get_ball_state()
     if not ball then return nil end
-
     for _, robot in ipairs(allies) do
         if utils.has_captured_ball(robot, ball) then
             return robot.id
@@ -23,7 +23,6 @@ local function who_has_ball(team)
     return nil
 end
 
--- Función para detectar si el camino al arco está libre
 local function is_path_clear(from_pos, to_pos, opponents)
     local EPSILON = 0.2
     local a = Vector2D.new(from_pos.x, from_pos.y)
@@ -61,72 +60,48 @@ end
 
 function PAttack:is_done(game_state)
     local team = game_state.team or 0
+    if utils.team_has_ball(team) then return false end
 
-    if utils.team_has_ball(team) then
-        return false -- seguimos la play porque tenemos la pelota
-    end
-
-    -- Si no tenemos la pelota, veamos si el striker puede recuperarla
     local striker_id = self.roles.striker
     local robot = api.get_robot_state(striker_id, team)
     local ball = api.get_ball_state()
-
-    if not robot or not ball then
-        return true -- no podemos hacer nada sin info, terminamos la play
-    end
+    if not robot or not ball then return true end
 
     local dx = robot.x - ball.x
     local dy = robot.y - ball.y
-    local distance = math.sqrt(dx * dx + dy * dy)
-
-    if distance < 0.5 then
-        return false -- el striker está cerca, que intente capturar
-    end
-
-    return true -- pelota muy lejos
+    return math.sqrt(dx * dx + dy * dy) > 0.5
 end
 
 function PAttack:process(game_state)
     local team = game_state.team
     local ball = api.get_ball_state()
     local opponents = api.get_opponents(team)
+    if not ball or not opponents then return end
 
-    if not ball or not opponents then
-        print("[PAttack] Error: faltan datos de percepción.")
-        return
-    end
-
-    -- Actualizar rol si otro aliado capturó la pelota
     local possessor_id = who_has_ball(team)
     if possessor_id and possessor_id ~= self.last_striker_id then
-        print("[PAttack] Nuevo atacante detectado: R" .. possessor_id)
         self.roles.striker = possessor_id
         self.last_striker_id = possessor_id
         self.phase = "capture"
+        print("[PAttack] Nuevo atacante detectado: R" .. possessor_id)
     end
 
     local striker_id = self.roles.striker
-    if not striker_id then
-        print("[PAttack] Sin atacante asignado.")
-        return
-    end
-
+    if not striker_id then return end
     local striker = api.get_robot_state(striker_id, team)
-    if not striker then
-        print("[PAttack] Error: striker no está disponible.")
-        return
-    end
+    if not striker then return end
 
     local distance_to_ball = math.sqrt((striker.x - ball.x)^2 + (striker.y - ball.y)^2)
 
-    -- FASE: captura
+    -- CAPTURE
     if self.phase == "capture" then
         if utils.has_captured_ball(striker, ball) then
             if is_path_clear(ball, GOAL_POS, opponents) then
-                print("[PAttack] Captura + camino libre → fase kick")
                 self.phase = "kick"
+                print("[PAttack] Captura + camino libre → fase kick")
             else
-                print("[PAttack] Captura pero camino bloqueado.")
+                self.phase = "pass"
+                print("[PAttack] Captura pero camino bloqueado → fase pase")
             end
         else
             print("[PAttack] Capturando pelota...")
@@ -135,40 +110,73 @@ function PAttack:process(game_state)
         return
     end
 
-    -- FASE: disparo
+    -- KICK
     if self.phase == "kick" then
         print("[PAttack] Fase kick activa...")
-        local robot = api.get_robot_state(striker_id, team)
-
-        if utils.is_ready_to_kick(robot, ball, GOAL_POS) then
-            print("[PAttack] Robot listo para disparar. Ejecutando kick...")
-            local success = kick.process(striker_id, team, GOAL_POS)
-            if success then
+        if utils.is_ready_to_kick(striker, ball, GOAL_POS) then
+            if kick.process(striker_id, team, GOAL_POS) then
                 print("[PAttack] Disparo ejecutado → fase espera")
                 self.phase = "wait_for_reacquire"
-            else
-                print("[PAttack] Kick aún en proceso, esperando confirmación...")
             end
         else
-            print("[PAttack] Reajustando orientación y posición antes de disparar...")
-            aim.run_once(striker_id, team, { target = GOAL_POS })  -- ← ❌ esta línea causa el error
+            print("[PAttack] Reajustando antes de disparar...")
+            move.process(striker_id, team, GOAL_POS)
+        end
+        return
+    end
+
+    -- PASS
+    if self.phase == "pass" then
+        local support1_id = self.roles.support1
+        local support2_id = self.roles.support2
+        local support1 = api.get_robot_state(support1_id, team)
+        local support2 = api.get_robot_state(support2_id, team)
+
+        if not support1 or not support2 then
+            print("[PAttack] Robots de soporte no encontrados.")
             return
         end
+
+        local striker_pos = Vector2D.new(striker.x, striker.y)
+        local s1_pos = Vector2D.new(support1.x, support1.y)
+        local s2_pos = Vector2D.new(support2.x, support2.y)
+
+        local d1 = (s1_pos - striker_pos):length()
+        local d2 = (s2_pos - striker_pos):length()
+
+        local receiver_id, advance_id
+        if d1 < d2 then
+            receiver_id = support1_id
+            advance_id = support2_id
+        else
+            receiver_id = support2_id
+            advance_id = support1_id
+        end
+
+        print("[PAttack] Ejecutando pase a R" .. receiver_id .. ", R" .. advance_id .. " se adelanta.")
+        -- solo para test
+        move.process(receiver_id, team, {x = striker.x + 0.5, y = striker.y})
+
+        self.pass_tactic = self.pass_tactic or coordinated_pass.new()
+        local region = { x_min = -6, x_max = 6, y_min = -4.5, y_max = 4.5 }
+        self.pass_tactic:process(striker_id, receiver_id, team, region)
+
+        -- 🚨 Aquí está la línea corregida:
+        local target_pos = { x = GOAL_POS.x - 1.0, y = 1.5 }
+        move.process(advance_id, team, target_pos)
 
         return
     end
 
-
-
-    -- FASE: espera de re-captura
+    -- WAIT
     if self.phase == "wait_for_reacquire" then
         if distance_to_ball > 0.5 then
-            print("[PAttack] Pelota fuera de alcance → esperando recuperación...")
-        else
-            print("[PAttack] Aún cerca de la pelota, sin cambios.")
+            print("[PAttack] Esperando nueva captura...")
         end
         return
     end
 end
 
 return PAttack
+
+

@@ -8,25 +8,21 @@ local game_state = {
 }
 
 -- Lista de IDs fijos para esta prueba
-local ids = {0, 1, 2}
-local roles = {}
-
-local function assign_current_roles()
-    roles[ids[1]] = 0 -- striker
-    roles[ids[2]] = 1 -- support1
-    roles[ids[3]] = 1 -- support2
-end
+local ids = {}
+ids[1] = 0 -- striker
+ids[2] = 1 -- support1
+ids[3] = 2 -- support2
 
 local function teleport_all()
-    print("utilizando funcion puta")
-    grsim.teleport_robot(ids[1], 0, 3.2, -0.3, 0)
-    grsim.teleport_robot(ids[2], 0, -0.5, 1, 0)
-    grsim.teleport_robot(ids[3], 0, -0.5, -1, 0)
-    grsim.teleport_ball(3, -0.5)
+    print("[Test] Teleportando robots y balón...")
+
+    grsim.teleport_robot(ids[1], 0, 0, -0.5, 0)     -- striker
+    grsim.teleport_robot(ids[2], 0, 0, 0.5, 0)      -- support1
+    grsim.teleport_robot(ids[3], 0, -0.5, -1, 0)    -- support2
+    grsim.teleport_ball(0, -0.2)
 end
 
--- Inicializar roles y posición
-assign_current_roles()
+-- Inicializar posición
 teleport_all()
 
 -- Crear la play
@@ -38,22 +34,19 @@ play:assign_roles({
 })
 
 local frame_count = 0
-local delay_frames = 10
+local delay_frames = 30
 local play_terminada = false
 
 function process()
-    -- Si la play terminó, no hacemos nada más
     if play_terminada then
         return
     end
 
-    -- Delay inicial para evitar bugs por estado sin actualizar
     if frame_count < delay_frames then
         frame_count = frame_count + 1
         return
     end
 
-    -- Ejecutar lógica de la play
     if play:is_done(game_state) then
         print("[Test] Play finalizada. No se reiniciará (fin de prueba).")
         play_terminada = true
@@ -61,3 +54,4 @@ function process()
         play:process(game_state)
     end
 end
+
