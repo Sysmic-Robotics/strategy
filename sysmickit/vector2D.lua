@@ -55,6 +55,10 @@ function Vector2D:angle_to(other)
     return math.atan(det, dot)
 end
 
+function Vector2D:cross(other)
+    return self.x * other.y - self.y * other.x
+end
+
 
 
 return Vector2D
