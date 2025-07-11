@@ -1,5 +1,7 @@
 
 local Vector2D = require("sysmickit.vector2D")
+local api = require("sysmickit.lua_api")
+
 -- utils.lua
 local utils = {}
 
@@ -27,28 +29,21 @@ function utils.is_ready_to_kick(robot, ball, target)
 end
 
 
---- Check if the robot has the ball on its dribbler (distance + facing angle)
 function utils.has_captured_ball(robot, ball)
-    local robot_pos = Vector2D.new(robot.x, robot.y)
-    local ball_pos = Vector2D.new(ball.x, ball.y)
-    local to_ball = ball_pos - robot_pos
-    local CAPTURE_RADIUS = 0.12 -- Robot radius + ball radius + small margin
-    -- Check distance
-    if to_ball:length_squared() > CAPTURE_RADIUS * CAPTURE_RADIUS then
+    if not robot or not robot.orientation then
         return false
     end
 
-    -- Check if facing the ball
-    local robot_dir = Vector2D.new(math.cos(robot.orientation), math.sin(robot.orientation))
-    local angle = to_ball:angle_to(robot_dir)
-    -- If is has more angle than the dribbler
+    local dx = ball.x - robot.x
+    local dy = ball.y - robot.y
+    local angle_to_ball = math.atan(dy, dx)
+    local angle_diff = angle_to_ball - robot.orientation
+    local aligned = math.abs(math.cos(angle_diff)) > 0.95
 
-    if math.abs(angle) > 0.26 then
-        return false
-    end
-
-    return true
+    local distance = math.sqrt(dx * dx + dy * dy)
+    return aligned and distance < 0.2
 end
+
 
 
 --- Compute the angle (in radians) between two points.
@@ -148,6 +143,21 @@ function utils.is_path_clear(start, goal, obstacles, clearance)
     end
     return true
 end
+
+
+function utils.team_has_ball(team)
+    local robots = api.get_allies(team)
+    local ball = api.get_ball_state()
+    if not ball then return false end
+
+    for _, robot in ipairs(robots) do
+        if utils.has_captured_ball(robot, ball) then
+            return true
+        end
+    end
+    return false
+end
+
 
 
 

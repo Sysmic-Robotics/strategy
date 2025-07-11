@@ -1,5 +1,5 @@
 -- tactics/CoordinatedPass.lua
--- Pass the ball from a specific robot to a another robot in a specific region
+-- Pass the ball from a specific robot to another robot in a specific region
 local api     = require("sysmickit.lua_api")
 local kick    = require("skills.kick_to_point")
 local SMove    = require("skills.SMove")
@@ -27,58 +27,81 @@ end
 --- @param region table {x_min, x_max, y_min, y_max}
 --- @return boolean true when this cycle is done
 function CoordinatedPass:process(passerId, receiverId, team, region)
+    print("[TCoordinatedPass] Procesando: passer = " .. passerId .. ", receiver = " .. receiverId)
+
     local ball     = api.get_ball_state()
     local passer   = api.get_robot_state(passerId, team)
     local receiver = api.get_robot_state(receiverId, team)
 
     if not ball or not passer or not receiver then
-        print("No receiver, ball or passer")
+        print("[TCoordinatedPass] Faltan datos: ball = " .. tostring(ball ~= nil) ..
+              ", passer = " .. tostring(passer ~= nil) ..
+              ", receiver = " .. tostring(receiver ~= nil))
         return false
     end
 
     if self.state == "init" then
+        print("[TCoordinatedPass] Estado: init")
         self.lastBallPos = { x = ball.x, y = ball.y }
         self.computedTarget = PassPointSolver.find_best_pass_point(
             ball, receiver, region, 0.25, 2.0, 15
         )
         if not self.computedTarget then
-            print("[Pass] No valid target found in region")
+            print("[TCoordinatedPass] No se encontró punto válido, usando posición del receiver")
             self.computedTarget = {x = receiver.x , y= receiver.y}
             return false
         end
+        print("[TCoordinatedPass] Punto de pase encontrado: x=" .. self.computedTarget.x .. ", y=" .. self.computedTarget.y)
         self.state = "prepare_pass"
         return false
 
-    -- The passer has the ball and is facing the target
-    -- The receiver is in position and is facing the passer
     elseif self.state == "prepare_pass" then
-        -- Passer: Capture the ball and aim to the pass target
+        print("[TCoordinatedPass] Estado: prepare_pass")
         local ready = 0
+
         if SCapture.process(passerId, team) then
-           if Saim.process(passerId, team, self.computedTarget) then
+            print("[TCoordinatedPass] Passer capturó la pelota")
+            if Saim.process(passerId, team, self.computedTarget) then
+                print("[TCoordinatedPass] Passer está apuntando al objetivo")
                 ready = ready + 1
-           end
-        end
-        -- Receiver: Capture the ball and aim to the ball
-        if SMove.process(receiverId, team, self.computedTarget) then
-            if Saim.process(receiverId, team, ball) then
-                ready = ready + 1
+            else
+                print("[TCoordinatedPass] Passer no pudo apuntar al objetivo")
             end
+        else
+            print("[TCoordinatedPass] Passer no pudo capturar la pelota")
+        end
+
+        if SMove.process(receiverId, team, self.computedTarget) then
+            print("[TCoordinatedPass] Receiver llegó a la posición")
+            if Saim.process(receiverId, team, ball) then
+                print("[TCoordinatedPass] Receiver está apuntando hacia la pelota")
+                ready = ready + 1
+            else
+                print("[TCoordinatedPass] Receiver no pudo apuntar hacia la pelota")
+            end
+        else
+            print("[TCoordinatedPass] Receiver no se movió a la posición")
         end
 
         if ready >= 2 then
+            print("[TCoordinatedPass] Listo para patear. Transición a 'kick'")
             self.state = "kick"
         end
 
         return false
 
     elseif self.state == "kick" then
+        print("[TCoordinatedPass] Estado: kick")
         if kick.process(passerId, team,  self.computedTarget) then
+            print("[TCoordinatedPass] Pase ejecutado con éxito")
             self.state = "receive"
+        else
+            print("[TCoordinatedPass] Aún no se ejecuta el pase")
         end
         return false
 
     elseif self.state == "receive" then
+        print("[TCoordinatedPass] Estado: receive")
         return pass_receiver.process(receiverId, team)
     end
 

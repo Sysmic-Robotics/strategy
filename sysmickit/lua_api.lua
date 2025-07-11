@@ -138,4 +138,32 @@ function LuaAPI.dribbler(robotId, team, speed)
     dribbler(robotId, team, speed)
 end
 
+function LuaAPI.get_opponents(team)
+    local opponent_team = (team == 0) and 1 or 0
+    local opponents = {}
+    for id = 0, 10 do
+        local opp = LuaAPI.get_robot_state(id, opponent_team)
+        if opp and opp.x and opp.y then
+            table.insert(opponents, {x = opp.x, y = opp.y})
+        end
+    end
+    return opponents
+end
+
+--- Devuelve la posición de todos los aliados activos del equipo dado
+--- @param team number El identificador del equipo (0 o 1)
+--- @return table Una lista con posiciones { {x, y}, {x, y} }
+function LuaAPI.get_allies(team)
+    local allies = {}
+    for id = 0, 10 do
+        local ally = LuaAPI.get_robot_state(id, team)
+        if ally and ally.x and ally.y then
+            table.insert(allies, {x = ally.x, y = ally.y})
+        end
+    end
+    return allies
+end
+
+
+
 return LuaAPI
