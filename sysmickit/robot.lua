@@ -12,6 +12,7 @@ local KickToPoint   = require("skills.kick_to_point")
 local SCircleAroundBall = require("skills.SCircleAroundBall")
 local SDribbleMove = require("skills.SDribbleMove")
 local SQuickShot = require("skills.SQuickShot")
+local MarkOpponent          = require("skills.SMarkOpponent")
 local Robot = {}
 Robot.__index = Robot
 
@@ -55,7 +56,11 @@ function Robot:Intercept(target)
 end
 
 function Robot:Mark(target)
-    return Mark.process(self.id, self.team, target)
+    return Mark.process(self.id, self.team,target)
+end
+
+function Robot:MarkOpponent(opponentId)
+    return Mark.process(self.id, self.team,opponentId)
 end
 
 function Robot:PassReceiver()
