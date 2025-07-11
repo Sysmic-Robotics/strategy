@@ -71,6 +71,12 @@ function CoordinatedPass:process(passerId, receiverId, team, region)
             print("[TCoordinatedPass] Passer no pudo capturar la pelota")
         end
 
+        local receiver = api.get_robot_state(receiverId, team)
+        if receiver then
+            print(string.format("[TCoordinatedPass] Receiver pos actual: x=%.2f y=%.2f", receiver.x, receiver.y))
+            print(string.format("[TCoordinatedPass] Receiver objetivo: x=%.2f y=%.2f", self.computedTarget.x, self.computedTarget.y))
+        end
+
         if SMove.process(receiverId, team, self.computedTarget) then
             print("[TCoordinatedPass] Receiver llegó a la posición")
             if Saim.process(receiverId, team, ball) then
