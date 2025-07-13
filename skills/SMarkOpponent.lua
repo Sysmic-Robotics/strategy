@@ -12,16 +12,34 @@ local M = {}
 -- @param team number Our team ID (0 or 1)
 -- @param opponentId number The ID of the opponent to mark
 -- @param alpha number Optional balance factor (0 = on goal, 1 = on opponent). Default 0.7
-function M.process(robotId, team, opponentId, alpha)
-    alpha = alpha or 0.9  -- closer to opponent by default
-
+function M.process(robotId, team, opponentId)
+    
+    local alpha =  0.7  -- closer to opponent by default
     local opponent = engine.get_robot_state(opponentId, 1 - team)
+    
     if not opponent or not opponent.active then return end
     
 
     -- Goal position based on team
     local goal = { x = -4.5, y = 0 }
-    if team == 1 then goal.x = 4.5 end
+    if team == 1 then 
+        goal.x = 4.5 
+        if opponent.x > 0 then
+            alpha = 0.9
+
+        elseif opponent.x < 0 then
+            alpha = 0.5
+        end
+    else
+        if opponent.x > 0 then
+            alpha = 0.5
+
+        elseif opponent.x < 0 then
+            alpha = 0.9
+        end
+
+    end
+
 
     -- Weighted position: closer to the opponent
     local target = {

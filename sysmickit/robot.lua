@@ -60,7 +60,7 @@ function Robot:Mark(target)
 end
 
 function Robot:MarkOpponent(opponentId)
-    return Mark.process(self.id, self.team,opponentId)
+    return MarkOpponent.process(self.id, self.team,opponentId)
 end
 
 function Robot:PassReceiver()

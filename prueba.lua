@@ -1,5 +1,6 @@
 local AdvanceWithPass = require("plays.ForwardPass")
-
+local markPlay = require("plays.Defend3")
+local mark = markPlay.new({0,1},1)
 local game_state = {
     team = 0,
     in_offense = true,
@@ -24,8 +25,9 @@ local play = AdvanceWithPass.new()
 play:assign_roles(roles)
 
 local delay_frame = true
-
+mark:process()
 function process()
+    
     -- Skip one frame after teleport so ball state updates
     if delay_frame then
         delay_frame = false
@@ -40,4 +42,5 @@ function process()
     else
         play:process(game_state)
     end
+    
 end
