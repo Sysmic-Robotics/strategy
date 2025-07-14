@@ -127,4 +127,32 @@ function utils.rotation_direction(ball, robot, pivot)
 end
 
 
+--- Verifica si el camino entre dos puntos está libre de obstáculos.
+-- @param start table {x, y}
+-- @param goal table {x, y}
+-- @param obstacles table array de {x, y}
+-- @param clearance number distancia mínima para considerar libre el camino
+-- @return boolean
+function utils.is_path_clear(start, goal, obstacles, clearance)
+    for _, obs in pairs(obstacles) do
+        -- Proyección del obstáculo sobre la recta start-goal
+        local dx = goal.x - start.x
+        local dy = goal.y - start.y
+        local length = math.sqrt(dx * dx + dy * dy)
+        if length == 0 then return false end
+        local t = ((obs.x - start.x) * dx + (obs.y - start.y) * dy) / (length * length)
+        t = math.max(0, math.min(1, t))
+        local closest = {
+            x = start.x + t * dx,
+            y = start.y + t * dy
+        }
+        local dist_sq = (obs.x - closest.x)^2 + (obs.y - closest.y)^2
+        if dist_sq < clearance * clearance then
+            return false
+        end
+    end
+    return true
+end
+
+
 return utils

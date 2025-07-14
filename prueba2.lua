@@ -1,28 +1,40 @@
-local Robot      = require("sysmickit.robot")
+local PAttack = require("plays.PAttack")
 
--- Ajusta esto al nombre real de tu archivo:
-local TKickToGoal     = require("tactics.TKickToGoal")
-local TCoordinatedPass= require("tactics.TCoordinatedPass")
-local TClearBall      = require("tactics.TClearBall")    -- o "tactics.TClearBall" si renombraste el .lua
-local TPressNearest     = require("tactics.TPressNearest") 
-local TMarkZone      = require("tactics.TMarkZone") 
+local game_state = {
+    team = 0, -- blue
+    in_offense = true,
+    in_defense = false,
+    aborted = false,
+}
 
--- crea instancias y guárdalas
-local pressTactic    = TPressNearest.new()
-local passTactic     = TCoordinatedPass.new()
-local clearTactic    = TClearBall.new({ x = 3, y = 3 })
-local markTactic   = TMarkZone.new()
+local roles = { [0] = 0, [1] = 1 }
 
--- crea robots
-local robot1 = Robot.new(0, 0)
-local robot2 = Robot.new(0, 1)
--- ...
+local function swap_roles()
+    roles[0], roles[1] = roles[1], roles[0]
+    print(string.format("[PAttack] Swapped roles: [0] = %d, [1] = %d", roles[0], roles[1]))
+end
+
+grsim.teleport_robot(0, 0, -3.2, -0.5, 0)
+grsim.teleport_robot(1, 0, -3.2, 0.5, 0)
+grsim.teleport_ball(-3, -0.2)
+
+local play = PAttack.new()
+play:assign_roles(roles)
+
+local delay_frame = true
 
 function process()
+    if delay_frame then
+        delay_frame = false
+        return
+    end
 
-  --clearTactic:process(robot1.id, robot1.team) 
-  --pressTactic:process(robot1.id, robot1.team,{x=0,y=0})
-  markTactic:process(robot1.id, robot1.team, {x=0,y=0})
-
-
+    if play:is_done(game_state) then
+        swap_roles()
+        play = PAttack.new()
+        play:assign_roles(roles)
+        delay_frame = true
+    else
+        play:process(game_state)
+    end
 end

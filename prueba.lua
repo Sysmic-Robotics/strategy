@@ -1,46 +1,19 @@
-local AdvanceWithPass = require("plays.ForwardPass")
-local markPlay = require("plays.ZoneDefense")
-local mark = markPlay.new({0,1},1)
-local game_state = {
-    team = 0,
-    in_offense = true,
-    in_defense = false,
-    aborted = false,
-}
+-- Asegúrate de ajustar los paths según tu estructura real
+local PAttack = require("plays.PAttack")
+local play = PAttack.new()
 
-local roles = { [0] = 0, [1] = 1 }
+-- Asigna los roles de los robots que participarán (puedes cambiarlos a tus IDs)
+play:assign_roles({[0]=0, [1]=1})
 
-local function swap_roles()
-    roles[0], roles[1] = roles[1], roles[0]
-    print(string.format("[AdvanceWithPass] Swapped roles: [0] = %d, [1] = %d", roles[0], roles[1]))
-end
+-- Este es tu "ciclo principal" que se llamará por el engine en cada frame
+function base.process()
+    -- Construye el game_state real. Modifica según tus necesidades de prueba:
+    local game_state = {
+        team = 0,           -- 0 para azul, 1 para amarillo (ajusta a tu equipo)
+        in_offense = true,  -- Mantén true para probar ataques sin parar
+        aborted = false,    -- Puedes poner en true si quieres cortar la jugada
+    }
 
--- Teleport robots and ball
-grsim.teleport_robot(0, 0, 0, -0.5, 0)
-grsim.teleport_robot(1, 0, 0, 0.5, 0)
-grsim.teleport_ball(0, 0)
-
--- Initialize play and delay state
-local play = AdvanceWithPass.new()
-play:assign_roles(roles)
-
-local delay_frame = true
-mark:process()
-function process()
-    
-    -- Skip one frame after teleport so ball state updates
-    if delay_frame then
-        delay_frame = false
-        return
-    end
-
-    if play:is_done(game_state) then
-        swap_roles()
-        play = AdvanceWithPass.new()
-        play:assign_roles(roles)
-        delay_frame = true -- wait again after reset
-    else
-        play:process(game_state)
-    end
-    
+    -- Llama la play con el estado del juego
+    play:process(game_state)
 end
