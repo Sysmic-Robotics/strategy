@@ -1,5 +1,5 @@
----@class LuaAPI
-local LuaAPI = {}
+---@class Engine
+local Engine = {}
 
 ---
 --- Moves the specified robot to the given point.
@@ -8,7 +8,7 @@ local LuaAPI = {}
 --- @param team number The team identifier.
 --- @param point table A table containing the target coordinates with keys `x` and `y`.
 --- @return nil
-function LuaAPI.move_to(robotId, team, point)
+function Engine.move_to(robotId, team, point)
     move_to(robotId, team, point)
 end
 
@@ -18,8 +18,7 @@ end
 --- @param team number The team identifier.
 --- @param point table A table containing the target coordinates with keys `x` and `y`.
 --- @return nil
-function LuaAPI.move_direct(robotId, team, point)
-    
+function Engine.move_direct(robotId, team, point)
     move_direct(robotId, team, point)
 end
 
@@ -39,12 +38,12 @@ end
 --- @param robotId number The ID of the robot.
 --- @param team number The team identifier.
 --- @return table The robot state table.
-function LuaAPI.get_robot_state(robotId, team)
+function Engine.get_robot_state(robotId, team)
     if type(robotId) ~= "number" then
-        error("[LuaAPI] Invalid robotId: expected number, got " .. type(robotId), 2)
+        error("[Engine] Invalid robotId: expected number, got " .. type(robotId), 2)
     end
     if type(team) ~= "number" then
-        error("[LuaAPI] Invalid team: expected number, got " .. type(team), 2)
+        error("[Engine] Invalid team: expected number, got " .. type(team), 2)
     end
 
     return get_robot_state(robotId, team)
@@ -52,11 +51,11 @@ end
 
 --- Get the positions of all robots on a team (only 2 robots: ID 0 and 1)
 --- @return table A list of robot positions { {x, y}, {x, y} }
-function LuaAPI.get_all_robots_positions()
+function Engine.get_all_robots_positions()
     local robots = {}
     local team = 1
     for id = 0, 1 do
-        local result = LuaAPI.get_robot_state(id, team)
+        local result = Engine.get_robot_state(id, team)
         if result and result.x and result.y then
             table.insert(robots, { x = result.x, y = result.y })
         end
@@ -77,7 +76,7 @@ end
 --- @param ki number? (optional) Integral gain. Default is 1.0.
 --- @param kd number? (optional) Derivative gain. Default is 0.1.
 --- @return nil
-function LuaAPI.face_to(robotId, team, point, kp, ki, kd)
+function Engine.face_to(robotId, team, point, kp, ki, kd)
     kp = kp or 1.0
     ki = ki or 1.0
     kd = kd or 0.1
@@ -93,7 +92,7 @@ end
 --- * y: number
 ---
 --- @return table The ball state table.
-function LuaAPI.get_ball_state()
+function Engine.get_ball_state()
     return get_ball_state()
 end
 
@@ -103,7 +102,7 @@ end
 --- @param robotId number The ID of the robot.
 --- @param team number The team identifier.
 --- @return nil
-function LuaAPI.kickx(robotId, team)
+function Engine.kickx(robotId, team)
     kickx(robotId, team)
 end
 
@@ -113,7 +112,7 @@ end
 --- @param robotId number The ID of the robot.
 --- @param team number The team identifier.
 --- @return nil
-function LuaAPI.kickz(robotId, team)
+function Engine.kickz(robotId, team)
     kickz(robotId, team)
 end
 
@@ -124,9 +123,9 @@ end
 --- @param team number The team identifier.
 --- @param speed number The dribbler speed (0–10).
 --- @return nil
-function LuaAPI.dribbler(robotId, team, speed)
+function Engine.dribbler(robotId, team, speed)
     if type(speed) ~= "number" then
-        error("[LuaAPI.dribbler] Invalid type for 'speed': expected number, got " .. type(speed))
+        error("[Engine.dribbler] Invalid type for 'speed': expected number, got " .. type(speed))
     end
 
     if speed < 0 then
@@ -138,4 +137,68 @@ function LuaAPI.dribbler(robotId, team, speed)
     dribbler(robotId, team, speed)
 end
 
-return LuaAPI
+
+---
+--- Sends a velocity command to the specified robot.
+---
+--- Sets the translational and rotational velocities for the robot.
+---
+--- @param robotId number The ID of the robot.
+--- @param team number The team identifier (e.g., 0 = blue, 1 = yellow).
+--- @param vx number Velocity in the X direction (m/s).
+--- @param vy number Velocity in the Y direction (m/s).
+--- @param vtetha number Rotational velocity (rad/s).
+--- @return nil
+function Engine.send_velocity(robotId, team, vx, vy, vtetha)
+    send_velocity(robotId, team, vx, vy, vtetha)
+end
+
+---
+--- Retrieves the current referee command as a string.
+---
+--- This reflects the latest command issued by the referee system,
+--- such as "HALT", "STOP", "NORMAL_START", etc.
+---
+--- @return string The current referee command.
+function Engine.get_ref_message()
+    return get_ref_message()
+end
+
+---
+--- Retrieves the current state of the blue team robots.
+---
+--- Returns a list of robot state tables, each containing:
+--- * id: number
+--- * team: number
+--- * x: number
+--- * y: number
+--- * vel_x: number
+--- * vel_y: number
+--- * orientation: number
+--- * active: boolean
+---
+--- @return table[] List of blue team robot states.
+function Engine.get_blue_team_state()
+    return get_blue_team_state()
+end
+
+---
+--- Retrieves the current state of the yellow team robots.
+---
+--- Returns a list of robot state tables, each containing:
+--- * id: number
+--- * team: number
+--- * x: number
+--- * y: number
+--- * vel_x: number
+--- * vel_y: number
+--- * orientation: number
+--- * active: boolean
+---
+--- @return table[] List of yellow team robot states.
+function Engine.get_yellow_team_state()
+    return get_yellow_team_state()
+end
+
+
+return Engine

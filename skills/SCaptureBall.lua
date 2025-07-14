@@ -1,4 +1,4 @@
-local Engine = require("sysmickit.lua_api")
+local Engine = require("sysmickit.engine")
 local utils = require("sysmickit.utils")
 local Vector2D = require("sysmickit.vector2D")
 local SMove = require("skills.SMove")
@@ -17,7 +17,7 @@ function M.process(robotId, team)
     local robot = Engine.get_robot_state(robotId, team)
 
     if utils.has_captured_ball(robot, ball) then
-        Engine.dribbler(robotId, team, 10)
+        Engine.dribbler(robotId, team, 2)
         return true
     end
 
@@ -35,7 +35,7 @@ function M.process(robotId, team)
         if SAim.process(robotId, team, ball) then
             SMoveDirect.process(robotId, team, ball)
         end
-        Engine.dribbler(robotId, team, 10)
+        Engine.dribbler(robotId, team, 2)
     end
 
     return false

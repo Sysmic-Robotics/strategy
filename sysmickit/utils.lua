@@ -31,23 +31,28 @@ end
 function utils.has_captured_ball(robot, ball)
     local robot_pos = Vector2D.new(robot.x, robot.y)
     local ball_pos = Vector2D.new(ball.x, ball.y)
+
+    -- Robot forward and right vectors
+    local forward = Vector2D.new(math.cos(robot.orientation), math.sin(robot.orientation))
+    local right   = Vector2D.new(-forward.y, forward.x) -- perpendicular vector
+
+    -- Transform ball position into robot's local coordinate frame
     local to_ball = ball_pos - robot_pos
-    local CAPTURE_RADIUS = 0.12 -- Robot radius + ball radius + small margin
-    -- Check distance
-    if to_ball:length_squared() > CAPTURE_RADIUS * CAPTURE_RADIUS then
-        return false
+    local x_local = to_ball:dot(forward) -- forward component
+    local y_local = to_ball:dot(right)   -- sideways component
+
+    -- Parameters for the rectangular capture zone
+    local robot_radius = 0.09
+    local offset       = robot_radius       -- where the rectangle starts
+    local length       = 0.03               -- how far forward from offset
+    local half_width   = 0.05               -- ± sideways from center
+
+    -- Check if the ball is inside the forward rectangle
+    if x_local >= offset and x_local <= (offset + length) and math.abs(y_local) <= half_width then
+        return true
     end
 
-    -- Check if facing the ball
-    local robot_dir = Vector2D.new(math.cos(robot.orientation), math.sin(robot.orientation))
-    local angle = to_ball:angle_to(robot_dir)
-    -- If is has more angle than the dribbler
-
-    if math.abs(angle) > 0.26 then
-        return false
-    end
-
-    return true
+    return false
 end
 
 

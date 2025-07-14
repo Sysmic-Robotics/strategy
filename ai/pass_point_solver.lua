@@ -1,6 +1,6 @@
 -- pass_point_solver.lua
 local utils = require("sysmickit.utils")
-local api   = require("sysmickit.lua_api")
+local api   = require("sysmickit.engine")
 
 local PassPointSolver = {}
 
@@ -81,7 +81,9 @@ function PassPointSolver.find_best_pass_point(ball, receiver, region, min_dist, 
             end
         end
     end
-
+    if best_point == nil then
+        return receiver
+    end
     return best_point
 end
 

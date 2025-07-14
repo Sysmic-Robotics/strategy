@@ -1,7 +1,8 @@
 -- pass_receiver.lua
-local api   = require("sysmickit.lua_api")
+local api   = require("sysmickit.engine")
 local move  = require("skills.SMove")
 local aim   = require("skills.SAim")
+local capture = require("skills.SCaptureBall")
 local utils = require("sysmickit.utils")
 local M     = {}
 
@@ -52,9 +53,10 @@ function M.process(robotId, team)
     move.process(robotId, team, interceptPoint)
 
     -- 8) Face the ball and spin up dribbler
-    aim.process(robotId, team, ball, "fast")
+    aim.process(robotId, team, ball)
     api.dribbler(robotId, team, 7)
-    if utils.distance(robot, ball) < (0.12) then
+    if utils.distance(robot, ball) < (0.20) then
+        capture.process(robotId, team)
         return true
     end
 

@@ -1,5 +1,5 @@
 -- tactics/pass_through.lua
-local api     = require("sysmickit.lua_api")
+local api     = require("sysmickit.engine")
 local kick    = require("skills.kick_to_point")
 local SMove   = require("skills.SMove")
 local SCapture = require("skills.SCaptureBall")

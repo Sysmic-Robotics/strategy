@@ -1,6 +1,6 @@
 -- Use when the ball is captured
 
-local api = require("sysmickit.lua_api")
+local api = require("sysmickit.engine")
 local SMoveDirect = require("skills.SMoveDirect")
 local M = {}
 

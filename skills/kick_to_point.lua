@@ -1,4 +1,4 @@
-local api = require("sysmickit.lua_api")
+local api = require("sysmickit.engine")
 local sCapture = require("skills.SCaptureBall")
 local aim = require("skills.SAim")
 local M = {}
@@ -14,11 +14,11 @@ function M.process(robotId, team, target)
     if not robot or not api.get_ball_state() then return false end
 
     -- Ensure to capture ball
-    if not sCapture.process(robotId, team, 10) then
+    if not sCapture.process(robotId, team) then
         return false
     end
 
-    if not aim.process(robotId, team, target, "slow") then
+    if not aim.process(robotId, team, target) then
         api.dribbler(robotId, team, 10)
         return false
     end
@@ -27,6 +27,7 @@ function M.process(robotId, team, target)
     api.kickx(robotId, team)
 
     return true
+
 end
 
 return M
