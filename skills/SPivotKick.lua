@@ -15,7 +15,7 @@ function M.process(robotId, team, target)
     end
 
     if SCapture.process(robotId, team) then
-        SKick.process(0,0)
+        SKick.process(robotId,team)
         return true
     end
     return false

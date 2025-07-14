@@ -1,49 +1,53 @@
--- tactics/clear_ball.lua
--- Despeja la pelota hacia un punto seguro tras interceptarla
-
-local api       = require("sysmickit.engine")
-local SCapture  = require("skills.SCaptureBall")
-local SKick     = require("skills.kick_to_point")
+local SCapture = require("skills.SCaptureBall")
+local SKick = require("skills.SPivotKick") -- Usa la skill moderna para disparo
 
 local ClearBall = {}
 ClearBall.__index = ClearBall
 
---- Crea una nueva instancia de la táctica ClearBall.
---- @param safePoint table {x, y} Punto al que despejar la bola
-function ClearBall.new(safePoint)
+function ClearBall.new()
   return setmetatable({
-    state     = "capture",  -- estados: "capture" → "kick" → "done"
-    safePoint = safePoint,
+    state = "capture"
   }, ClearBall)
 end
 
---- Ejecuta un paso de la táctica.
---- @param robot_id number ID del robot que hará el despeje
---- @param team     number ID del equipo
---- @return boolean true cuando la táctica ha finalizado
-function ClearBall:process(robot_id, team)
-  local ball = api.get_ball_state()
-
+--- Intenta capturar la pelota y despejarla a un punto seguro.
+-- Retorna true cuando ambas acciones han sido completadas.
+-- @param robot_id number
+-- @param team number
+-- @param safePoint table {x, y} - coordenada donde despejar
+function ClearBall:process(robot_id, team, safePoint)
   if self.state == "capture" then
-    -- intento de captura hasta tener la bola
-    if SCapture.process(robot_id, team) then
+    local captured = SCapture.process(robot_id, team)
+    if captured then
       self.state = "kick"
     end
     return false
+  end
 
-  elseif self.state == "kick" then
-    -- despeje al punto seguro
-    if SKick.process(robot_id, team, self.safePoint) then
+  if self.state == "kick" then
+    local kicked = SKick.process(robot_id, team, safePoint)
+    if kicked then
       self.state = "done"
       return true
     end
     return false
+  end
 
-  elseif self.state == "done" then
+  if self.state == "done" then
     return true
   end
 
+  -- Si por alguna razón el estado es desconocido, reestablece
+  self.state = "capture"
   return false
+end
+
+function ClearBall:reset()
+  self.state = "capture"
+end
+
+function ClearBall:isDone()
+  return self.state == "done"
 end
 
 return ClearBall

@@ -1,5 +1,5 @@
 local AdvanceWithPass = require("plays.ForwardPass")
-local markPlay = require("plays.Defend3")
+local markPlay = require("plays.ZoneDefense")
 local mark = markPlay.new({0,1},1)
 local game_state = {
     team = 0,

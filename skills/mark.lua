@@ -5,19 +5,17 @@ local move = require("skills.SMove")
 
 local M = {}
 
--- How far to position away from the target line (in meters)
 local block_distance = 0.3
 
 --- Places the robot between the ball and a given target (point or opponent).
+--- process returns true when robot is at mark point and facing target, false otherwise.
 --- @param robotId number
 --- @param team number
---- @param target table Can be:
----   { x, y } -> point to block,
----   or { id = opponentId, team = 1 } -> opponent to block
+--- @param target table
 function M.process(robotId, team, target)
     local robot = api.get_robot_state(robotId, team)
     local ball = api.get_ball_state()
-    if not robot or not ball then return end
+    if not robot or not ball then return false end
 
     -- Resolve target position
     local targetPos
@@ -26,9 +24,9 @@ function M.process(robotId, team, target)
     elseif target.id and target.team then
         targetPos = api.get_robot_state(target.id, target.team)
     end
-    if not targetPos then return end
+    if not targetPos then return false end
 
-    -- Compute a point between the target and ball, away from the target
+    -- Compute mark point
     local dx = targetPos.x - ball.x
     local dy = targetPos.y - ball.y
     local d = math.sqrt(dx * dx + dy * dy)
@@ -39,11 +37,14 @@ function M.process(robotId, team, target)
         y = ball.y + dy * (1 - block_distance / d),
     }
 
-    -- Move the robot to the mark point
-    move.process(robotId, team, markPoint)
+    -- Move and aim
+    local at_position = move.process(robotId, team, markPoint)
+    local at_orientation = aim.process(robotId, team, targetPos, "mid")
 
-    -- Face the opponent or ball
-    aim.process(robotId, team, targetPos, "mid")
+    if at_position and at_orientation then
+        return true
+    end
+    return false
 end
 
 return M

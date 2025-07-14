@@ -5,41 +5,21 @@ local move = require("skills.SMove")
 
 local M = {}
 
-
---- Mark an opponent more intelligently by staying between them and our goal,
--- slightly closer to the opponent and facing them.
--- @param robotId number Our robot's ID
--- @param team number Our team ID (0 or 1)
--- @param opponentId number The ID of the opponent to mark
--- @param alpha number Optional balance factor (0 = on goal, 1 = on opponent). Default 0.7
+--- Mark an opponent by staying between them and our goal, facing the opponent.
+--- process returns true when robot is at target and facing opponent, false otherwise.
 function M.process(robotId, team, opponentId)
-    
-    local alpha =  0.7  -- closer to opponent by default
+    local alpha = 0.7
     local opponent = engine.get_robot_state(opponentId, 1 - team)
-    
-    if not opponent or not opponent.active then return end
-    
+    if not opponent or not opponent.active then return false end
 
     -- Goal position based on team
     local goal = { x = -4.5, y = 0 }
     if team == 1 then 
         goal.x = 4.5 
-        if opponent.x > 0 then
-            alpha = 0.9
-
-        elseif opponent.x < 0 then
-            alpha = 0.5
-        end
+        alpha = opponent.x > 0 and 0.9 or 0.5
     else
-        if opponent.x > 0 then
-            alpha = 0.5
-
-        elseif opponent.x < 0 then
-            alpha = 0.9
-        end
-
+        alpha = opponent.x > 0 and 0.5 or 0.9
     end
-
 
     -- Weighted position: closer to the opponent
     local target = {
@@ -48,8 +28,14 @@ function M.process(robotId, team, opponentId)
     }
 
     -- Move and face the opponent
-    move.process(robotId, team, target)
-    engine.face_to(robotId, team, { x = opponent.x, y = opponent.y })
+    local at_position = move.process(robotId, team, target)
+    -- Orientación simple: robot debe estar mirando al rival (usa SAim)
+    local at_orientation = aim.process(robotId, team, opponent, "mid")
+
+    if at_position and at_orientation then
+        return true
+    end
+    return false
 end
 
 return M

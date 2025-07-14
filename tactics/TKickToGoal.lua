@@ -1,23 +1,22 @@
--- tactics/kick_to_goal.lua
-local SKick = require("skills.kick_to_point")
+local SPivotKick = require("skills.SPivotKick")
 
-local KickToGoal = {}
-KickToGoal.__index = KickToGoal
+local TKickToGoal = {}
+TKickToGoal.__index = TKickToGoal
 
-function KickToGoal.new()
-    return setmetatable({
-        state = "aim",
-    }, KickToGoal)
+function TKickToGoal.new()
+    return setmetatable({}, TKickToGoal)
 end
 
 --- Process the kick to goal tactic
 --- @param robot_id number
 --- @param team number
 --- @return boolean true if shot is completed
-function KickToGoal:process(robot_id, team)
-    local goal_point = { x = 4.5, y = 0 } -- Assuming positive x is opponent's goal
-    SKick.process(robot_id, team, goal_point)
-    return self.state == "done"
+function TKickToGoal:process(robot_id, team)
+    -- Define the correct goal depending on team (assuming 0: izquierda, 1: derecha)
+    local goal_x = team == 0 and 4.5 or -4.5
+    local goal_point = { x = goal_x, y = 0 }
+    -- Usar SPivotKick, que es la skill moderna y robusta
+    return SPivotKick.process(robot_id, team, goal_point)
 end
 
-return KickToGoal
+return TKickToGoal
