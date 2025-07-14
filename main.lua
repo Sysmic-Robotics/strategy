@@ -43,7 +43,8 @@ function process()
   --robot:Mark({x=0,y=0})
   --tmark:process(robot_id, team, zonePt)
  -- tintercept:process(robot_id, team,{x=3,y=-1}) 
-  --robot:PivotKick({x=2,y=0}) 
+  robot:PivotKick({x=2,y=0})
+  print("Robot state:", game_state(0))
   -- game_state debe contener al menos .team y puede incluir más info
  -- play:process(game_state)
 end

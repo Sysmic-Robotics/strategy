@@ -176,12 +176,12 @@ end
 --- * vel_y: number
 --- * orientation: number
 --- * active: boolean
----
+-------------------------------------------------------------------
 --- @return table[] List of blue team robot states.
 function Engine.get_blue_team_state()
     return get_blue_team_state()
 end
-
+------------------------------------------------------------------------
 ---
 --- Retrieves the current state of the yellow team robots.
 ---
@@ -198,6 +198,33 @@ end
 --- @return table[] List of yellow team robot states.
 function Engine.get_yellow_team_state()
     return get_yellow_team_state()
+end
+
+-- Devuelve todos los oponentes del equipo dado (como lista de posiciones)
+function Engine.get_opponents(team)
+    -- Para SSL: 0=blue, 1=yellow
+    local opponent_team = (team == 0) and 1 or 0
+    local opponents = {}
+    -- Puedes cambiar el rango máximo de id según tu liga (a veces es hasta 5, otras hasta 10)
+    for id = 0, 10 do
+        local opp = Engine.get_robot_state(id, opponent_team)
+        if opp and opp.x and opp.y then
+            table.insert(opponents, {x = opp.x, y = opp.y})
+        end
+    end
+    return opponents
+end
+
+-- Devuelve la posición de todos los aliados activos del equipo dado
+function Engine.get_allies(team)
+    local allies = {}
+    for id = 0, 10 do
+        local ally = Engine.get_robot_state(id, team)
+        if ally and ally.x and ally.y then
+            table.insert(allies, {x = ally.x, y = ally.y})
+        end
+    end
+    return allies
 end
 
 

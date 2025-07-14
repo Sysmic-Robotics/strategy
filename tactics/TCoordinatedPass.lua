@@ -3,7 +3,7 @@
 
 local api     = require("sysmickit.engine")
 local Robot   = require("sysmickit.robot")
-local PassPointSolver = require("AI.pass_point_solver")
+local PassPointSolver = require("AI.Attack_pass_pont_solver")
 local utils = require("sysmickit.utils")
 
 local CoordinatedPass = {}
@@ -39,7 +39,7 @@ function CoordinatedPass:process()
     if self.state == "init" then
         self.lastBallPos = { x = ball.x, y = ball.y }
         self.computedTarget = PassPointSolver.find_best_pass_point(
-            ball, receiverState, self.region, 0.25, 2.0, 15
+            ball, receiverState, self.region, 0.25, 2.0, 15, self.passer.team
         )
 
         if not self.computedTarget then
