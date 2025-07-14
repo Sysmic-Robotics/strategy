@@ -125,6 +125,27 @@ function utils.rotation_direction(ball, robot, pivot)
         return -1 -- horario
     end
 end
+-- Devuelve true si (x, y) está dentro del área propia para el equipo dado
+function utils.in_own_area(x, y, team)
+    -- SSL estándar B: arcos en x = -4.5 (azul, team=0) y x = +4.5 (amarillo, team=1)
+    -- Área de arquero: rectángulo desde x = -4.5 a x = -3.5 (azul), x = +3.5 a x = +4.5 (amarillo)
+    local x_min, x_max
+    if team == 0 then -- azul
+        x_min = -4.5
+        x_max = -3.5
+    else -- amarillo
+        x_min = 3.5
+        x_max = 4.5
+    end
+    -- Área típica: toda la altura (y) de la portería, por ejemplo -0.9 a +0.9
+    return x >= x_min and x <= x_max and math.abs(y) <= 0.9
+end
+
+-- Devuelve true si (x, y) está dentro del área rival para el equipo dado
+function utils.in_enemy_area(x, y, team)
+    -- Solo cambia la perspectiva del equipo
+    return utils.in_own_area(x, y, 1 - team)
+end
 
 
 return utils
