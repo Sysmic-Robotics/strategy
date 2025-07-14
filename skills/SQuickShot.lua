@@ -1,5 +1,5 @@
 -- File: skills/SQuickShot.lua
-local api          = require("sysmickit.lua_api")
+local api          = require("sysmickit.engine")
 local Vector2D     = require("sysmickit.vector2D")
 local SPivotAim    = require("skills.SPivotAim")
 local SAim         = require("skills.SAim")

@@ -1,5 +1,5 @@
 -- skills/SPivotKickFSM.lua
-local api        = require("sysmickit.lua_api")
+local api        = require("sysmickit.engine")
 local utils      = require("sysmickit.utils")
 local SCapture    = require("skills.SCaptureBall")      -- Updated to non-class capture_ball
 local SPivotAim  = require("skills.SPivotAim")

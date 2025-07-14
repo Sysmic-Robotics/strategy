@@ -3,9 +3,8 @@
 
 local api     = require("sysmickit.engine")
 local Robot   = require("sysmickit.robot")
-local pass_receiver = require("skills.pass_receiver")
 local PassPointSolver = require("AI.pass_point_solver")
-local SPivotAim = require("skills.SPivotAim")local utils = require("sysmickit.utils")
+local utils = require("sysmickit.utils")
 
 local CoordinatedPass = {}
 CoordinatedPass.__index = CoordinatedPass
@@ -32,14 +31,10 @@ end
 --- Run one step of this pass tactic.
 --- @return boolean true when this cycle is done
 function CoordinatedPass:process()
+
     local ball = api.get_ball_state()
     local passerState = api.get_robot_state(self.passer.id, self.passer.team)
     local receiverState = api.get_robot_state(self.receiver.id, self.receiver.team)
-
-    if not ball or not passerState or not receiverState then
-        print("[Pass] Missing ball, passer, or receiver state.")
-        return false
-    end
 
     if self.state == "init" then
         self.lastBallPos = { x = ball.x, y = ball.y }
@@ -54,29 +49,24 @@ function CoordinatedPass:process()
         end
 
         self.state = "prepare_pass"
-        print(self.state)
         print("computedTarget: " .. self.computedTarget.x .. "," .. self.computedTarget.y)
         return false
 
     elseif self.state == "prepare_pass" then
         local ready = 0
-        if SPivotAim.process(passerId, team, self.computedTarget) then
+
+        if self.passer:PivotAim(self.computedTarget) then
             ready = ready + 1
         end
-        -- Receiver: Capture the ball and aim to the ball
-        if SMove.process(receiverId, team, self.computedTarget) then
-            if Saim.process(receiverId, team, ball) then
-                ready = ready + 1
-            end
+
+        if self.receiver:Move(self.computedTarget) then
+            ready = ready + 1
         end
 
         if ready >= 2 then
             self.state = "kick"
-        else
-            self.state = "prepare_pass"
             print(self.state)
         end
-
         return false
 
     elseif self.state == "kick" then
@@ -86,7 +76,6 @@ function CoordinatedPass:process()
             print(self.state)
         end
         return false
-
     elseif self.state == "receive" then
         if utils.distance(passerState, ball) < (0.30) then
             if self.receiver:CaptureBall() then
@@ -97,8 +86,8 @@ function CoordinatedPass:process()
             return self.receiver:ReceiveBall()
         end
     end
-
     return false
 end
 
 return CoordinatedPass
+

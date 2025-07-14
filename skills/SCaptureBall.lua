@@ -14,8 +14,8 @@ local SAFE_DISTANCE = 0.18  -- Desired distance to ball
 -- @param robotId number The ID of the robot
 -- @param team number The team ID
 function M.process(robotId, team)
-    local ball = api.get_ball_state()
-    local robot = api.get_robot_state(robotId, team)
+    local ball = Engine.get_ball_state()
+    local robot = Engine.get_robot_state(robotId, team)
 
     if utils.has_captured_ball(robot, ball) then
         Engine.dribbler(robotId, team, 2)
@@ -33,7 +33,7 @@ function M.process(robotId, team)
         SMove.process(robotId, team, robot_to_ball)
     else
         -- Make sure to always approach the ball while is aiming
-        if SAim.process(robotId, team, ball, "medium") then
+        if SAim.process(robotId, team, ball) then
             SMoveDirect.process(robotId, team, ball)
         end
         Engine.dribbler(robotId, team, 2)

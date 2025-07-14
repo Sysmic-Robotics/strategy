@@ -13,6 +13,8 @@ local SCircleAroundBall = require("skills.SCircleAroundBall")
 local SDribbleMove = require("skills.SDribbleMove")
 local SQuickShot = require("skills.SQuickShot")
 local MarkOpponent          = require("skills.SMarkOpponent")
+local Engine = require("sysmickit.engine")
+local ReceiveBall = require("skills.SBallReceive")
 local Robot = {}
 Robot.__index = Robot
 
@@ -84,6 +86,10 @@ end
 
 function Robot:SQuickShot(target)
     return SQuickShot.process(self.id,self.team,target)
+end
+
+function Robot:ReceiveBall()
+    return ReceiveBall.process(self.id, self.team)
 end
 
 return Robot

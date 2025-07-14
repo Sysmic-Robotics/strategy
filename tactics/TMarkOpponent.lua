@@ -1,6 +1,6 @@
 -- tactics/TMarkOpponent.lua
 -- Táctica que marca a un oponente específico usando la skill SMarkOpponent
-local engine        = require("sysmickit.lua_api")
+local engine = require("sysmickit.engine")
 local SMarkOpponent = require("skills.SMarkOpponent")
 
 local MarkOpponent = {}
