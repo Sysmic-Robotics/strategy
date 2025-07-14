@@ -3,7 +3,7 @@ local utils = require("sysmickit.utils")
 
 local Aim = {}
 
-local DEFAULT_ORIENTATION_THRESHOLD = 0.05  -- radians
+local DEFAULT_ORIENTATION_THRESHOLD = 0.01  -- radians
 
 --- @param id number Robot id
 --- @param team number Robot team

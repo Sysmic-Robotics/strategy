@@ -5,7 +5,7 @@ local api     = require("sysmickit.engine")
 local Robot   = require("sysmickit.robot")
 local pass_receiver = require("skills.pass_receiver")
 local PassPointSolver = require("AI.pass_point_solver")
-local utils = require("sysmickit.utils")
+local SPivotAim = require("skills.SPivotAim")local utils = require("sysmickit.utils")
 
 local CoordinatedPass = {}
 CoordinatedPass.__index = CoordinatedPass
@@ -60,21 +60,20 @@ function CoordinatedPass:process()
 
     elseif self.state == "prepare_pass" then
         local ready = 0
-
-        -- Cambiar por el pivot kick
-        if self.passer:CaptureBall() then
-            if self.passer:Aim(self.computedTarget) then
+        if SPivotAim.process(passerId, team, self.computedTarget) then
+            ready = ready + 1
+        end
+        -- Receiver: Capture the ball and aim to the ball
+        if SMove.process(receiverId, team, self.computedTarget) then
+            if Saim.process(receiverId, team, ball) then
                 ready = ready + 1
             end
         end
 
-        if self.receiver:Move(self.computedTarget) then
-            self.receiver:Aim(ball)
-            ready = ready + 1
-        end
-
         if ready >= 2 then
             self.state = "kick"
+        else
+            self.state = "prepare_pass"
             print(self.state)
         end
 

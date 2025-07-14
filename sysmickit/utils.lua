@@ -113,5 +113,18 @@ function utils.random_between(min, max)
     return min + math.random() * (max - min)
 end
 
+-- Devuelve 1 si antihorario, -1 si horario
+function utils.rotation_direction(ball, robot, pivot)
+    local center = Vector2D.new(ball.x, ball.y)
+    local pos_robot = Vector2D.new(robot.x, robot.y) - center
+    local pos_pivot = Vector2D.new(pivot.x, pivot.y) - center
+    local cross = pos_robot:cross(pos_pivot)
+    if cross > 0 then
+        return 1 -- antihorario
+    else
+        return -1 -- horario
+    end
+end
+
 
 return utils
