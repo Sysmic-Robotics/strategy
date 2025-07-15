@@ -26,7 +26,7 @@ local SAFE_CLEAR = { [0] = {x = -3.5, y = 1.0}, [1] = {x = 3.5, y = 1.0} }
 
 function TGoalkeeper:process(robot_id, team)
     local ball = api.get_ball_state()
-    print("[TGoalKeeper] team:", team, "type:", type(team))
+    
     local goalie_x = GOAL_X[team]
     local area_x = AREA_X[team]
     local safe_clear = SAFE_CLEAR[team]

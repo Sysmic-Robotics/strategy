@@ -70,6 +70,9 @@ end
 -- @param b table {x, y}
 -- @return number
 function utils.distance(a, b)
+    if not a or not b or not a.x or not a.y or not b.x or not b.y then
+        return math.huge -- Devuelve distancia infinita si hay datos inválidos
+    end
     return math.sqrt((a.x - b.x)^2 + (a.y - b.y)^2)
 end
 
@@ -146,6 +149,38 @@ function utils.in_enemy_area(x, y, team)
     -- Solo cambia la perspectiva del equipo
     return utils.in_own_area(x, y, 1 - team)
 end
+
+
+--- Verifica si el camino entre dos puntos está libre de obstáculos.
+-- @param start table {x, y}
+-- @param goal table {x, y}
+-- @param obstacles table array de {x, y}
+-- @param clearance number distancia mínima para considerar libre el camino
+-- @return boolean
+function utils.is_path_clear(start, goal, obstacles, clearance)
+    for _, obs in pairs(obstacles) do
+        -- Proyección del obstáculo sobre la recta start-goal
+        local dx = goal.x - start.x
+        local dy = goal.y - start.y
+        local length = math.sqrt(dx * dx + dy * dy)
+        if length == 0 then return false end
+        local t = ((obs.x - start.x) * dx + (obs.y - start.y) * dy) / (length * length)
+        t = math.max(0, math.min(1, t))
+        local closest = {
+            x = start.x + t * dx,
+            y = start.y + t * dy
+        }
+        local dist_sq = (obs.x - closest.x)^2 + (obs.y - closest.y)^2
+        if dist_sq < clearance * clearance then
+            return false
+        end
+    end
+    return true
+end
+
+
+
+
 
 
 return utils
