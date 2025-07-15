@@ -1,9 +1,7 @@
--- File: plays/PBasic221Global.lua
 local Engine           = require("sysmickit.engine")
 local utils            = require("sysmickit.utils")
 local TGoalkeeper      = require("tactics.TGoalkeeper")
-local TKickToGoal      = require("tactics.TKickToGoal")
-local TCoordinatedPass = require("tactics.TCoordinatedPass2")
+local SCaptureBall     = require("skills.SCaptureBall")
 local TMarkZone        = require("tactics.TMarkZone")
 
 local PBasic221Global = {}
@@ -22,12 +20,11 @@ function PBasic221Global.new(team)
     local self = setmetatable({}, PBasic221Global)
     self.team = team or 0
     self.tactic_goalkeeper = TGoalkeeper.new()
-    self.tactic_attack     = TKickToGoal.new()
-    self.tactic_pass       = TCoordinatedPass.new()
     self.tactics_def       = {}
     for i=1, #DEF_ZONES do
         self.tactics_def[i] = TMarkZone.new()
     end
+    self.capture_tactic = SCaptureBall  -- SCaptureBall es stateless, no necesita .new()
     self.done = false
     return self
 end
@@ -73,36 +70,15 @@ function PBasic221Global:process(game_state)
         if id ~= attacker_id then table.insert(defenders, id) end
     end
 
-    -- 6. Ataque: ¿disparar o pasar?
-    local attacker = Engine.get_robot_state(attacker_id, self.team)
-    local dist_to_ball = utils.distance(attacker, ball)
-    local can_shoot = dist_to_ball < 1.0 -- Puedes ajustar este umbral
-    local shot_done = false
-
-    print("[PBasic221Global] Atacante:", attacker_id, "Distancia a balón:", dist_to_ball, "Defensores:", table.concat(defenders, ", "))
-
-    if can_shoot or #defenders == 0 then
-        -- Dispara al arco
-        print("[PBasic221Global] Atacante", attacker_id, "intenta disparar")
-        shot_done = self.tactic_attack:process(attacker_id, self.team)
-    else
-        -- Busca receptor válido (el más adelantado en y, o el primero que esté activo)
-        local receiver_id = nil
-        local max_y = -math.huge
-        for _, id in ipairs(defenders) do
-            local mate = Engine.get_robot_state(id, self.team)
-            if mate and mate.active and mate.y > max_y then
-                receiver_id = id
-                max_y = mate.y
-            end
+    -- 6. El atacante intenta capturar la pelota
+    if captured then
+        print("[PBasic221Global] ¡Pelota capturada por el robot", attacker_id, "!")
+        if game_state then
+            game_state.in_offense = true
+            game_state.in_defense = false
+            game_state.aborted = false
         end
-        if receiver_id then
-            print("[PBasic221Global] Atacante", attacker_id, "pasa a", receiver_id)
-            self.tactic_pass:process(attacker_id, self.team, receiver_id)
-        else
-            print("[PBasic221Global] No hay receptor válido, atacante intenta disparar")
-            shot_done = self.tactic_attack:process(attacker_id, self.team)
-        end
+        self.done = true
     end
 
     -- 7. Defensores: cubrir zonas (asigna a los primeros N defenders)
@@ -110,10 +86,9 @@ function PBasic221Global:process(game_state)
         self.tactics_def[i]:process(defenders[i], self.team, DEF_ZONES[i])
     end
 
-    -- 8. Termina si hubo disparo (opcional)
-    if shot_done then self.done = true end
     return self.done
 end
 
 return PBasic221Global
+
 
