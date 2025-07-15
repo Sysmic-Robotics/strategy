@@ -34,13 +34,11 @@ function TKickToGoal:process()
         -- Pivot to face the goal
         if self.kicker:PivotAim(goalPoint) then
             self.state = "kick"
-            print("[TKickToGoal] Aimed at goal, ready to kick")
         end
         return false
 
     elseif self.state == "kick" then
         if self.kicker:KickToPoint(goalPoint) then
-            print("[TKickToGoal] Kick executed toward goal!")
             return true
         end
         return false
