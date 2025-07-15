@@ -69,7 +69,7 @@ function PBasic221Global:process(game_state)
     for _, id in ipairs(active_ids) do
         if id ~= attacker_id then table.insert(defenders, id) end
     end
-
+    local captured = self.capture_tactic.process(attacker_id, self.team)
     -- 6. El atacante intenta capturar la pelota
     if captured then
         print("[PBasic221Global] ¡Pelota capturada por el robot", attacker_id, "!")

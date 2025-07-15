@@ -5,19 +5,20 @@ local KickToGoal = {}
 KickToGoal.__index = KickToGoal
 
 function KickToGoal.new()
-    return setmetatable({
-        state = "aim",
-    }, KickToGoal)
+    return setmetatable({}, KickToGoal)
 end
 
---- Process the kick to goal tactic
+--- Shoot the ball towards the opponent goal.
 --- @param robot_id number
---- @param team number
---- @return boolean true if shot is completed
+--- @param team number (0=blue,1=yellow)
+--- @return boolean always true after issuing the kick
 function KickToGoal:process(robot_id, team)
-    local goal_point = { x = 4.5, y = 0 } -- Assuming positive x is opponent's goal
+    local goal_point = { x = 4.5, y = 0 }
+    if team == 1 then
+        goal_point.x = -4.5
+    end
     SKick.process(robot_id, team, goal_point)
-    return self.state == "done"
+    return true
 end
 
 return KickToGoal
