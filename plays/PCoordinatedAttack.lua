@@ -1,9 +1,9 @@
--- File: plays/PCoordinatedAttack.lua
 local Engine           = require("sysmickit.engine")
 local utils            = require("sysmickit.utils")
 local SCaptureBall     = require("skills.SCaptureBall")
 local TKickToGoal      = require("tactics.TKickToGoal")
 local TCoordinatedPass = require("tactics.TCoordinatedPass")
+local TGoalkeeper      = require("tactics.TGoalkeeper")
 
 local PCoordinatedAttack = {}
 PCoordinatedAttack.__index = PCoordinatedAttack
@@ -16,28 +16,29 @@ local PASS_REGION = {
 }
 
 local GOAL_POS = { x = 4.5, y = 0 }
-local MAX_SHOT_DISTANCE = 2.7   -- metros desde el arco
-local ATTACK_TIMEOUT_FRAMES = 240  -- 4 segundos si el loop corre a 60 Hz
+local MAX_SHOT_DISTANCE = 2.7
+local ATTACK_TIMEOUT_FRAMES = 240  -- 4 segundos a 60 Hz
 local ADVANCE_OFFSET = 0.8
 local FORMATION_WIDTH = 2.5
 
-function PCoordinatedAttack.new()
+-- NUEVO: umbral de distancia máxima balón-robot para abortar ataque
+local BALL_TOO_FAR_DIST = 1
+
+function PCoordinatedAttack.new(team)
     return setmetatable({
         state = "prepare",
-        role_ids = {},
+        team = team or 0,
         pass_tactic = nil,
         kick_tactic = nil,
+        tactic_goalkeeper = TGoalkeeper.new(),
         attack_start_frame = nil,
         _chosen_support = nil,
         _support_positions = {},
+        _last_kicker = nil,
     }, PCoordinatedAttack)
 end
 
-function PCoordinatedAttack:assign_roles(roles)
-    self.role_ids = roles
-end
-
-function PCoordinatedAttack:is_done(game_state)
+function PCoordinatedAttack:is_done()
     return self.state == "done"
 end
 
@@ -47,10 +48,13 @@ function frame_count()
     return global_frame
 end
 
--- Calcula posiciones ideales para los supports y los mueve hacia allá (abanico adelante del kicker)
-local function set_support_positions(kicker, support_ids, team)
+local function set_other_supports_positions(kicker, support_ids, chosen_support, team)
     local positions = {}
-    local num_supports = #support_ids
+    local filtered_ids = {}
+    for _, id in ipairs(support_ids) do
+        if id ~= chosen_support then table.insert(filtered_ids, id) end
+    end
+    local num_supports = #filtered_ids
     for i=1, num_supports do
         local frac = (num_supports > 1) and (i-1)/(num_supports-1) or 0.5
         local y_pos = kicker.y - FORMATION_WIDTH/2 + frac * FORMATION_WIDTH
@@ -58,7 +62,7 @@ local function set_support_positions(kicker, support_ids, team)
         if team == 1 then x_pos = kicker.x - ADVANCE_OFFSET end
         positions[i] = {x = x_pos, y = y_pos}
     end
-    for i, id in ipairs(support_ids) do
+    for i, id in ipairs(filtered_ids) do
         local robot = Engine.get_robot_state(id, team)
         if robot then
             require("skills.SMove").process(id, team, positions[i])
@@ -67,75 +71,94 @@ local function set_support_positions(kicker, support_ids, team)
     return positions
 end
 
-function PCoordinatedAttack:process(game_state)
-    local team = game_state.team or 0
-    local kicker_id = self.role_ids[0]
-    local support_ids = {}
-    -- Recorre los roles (IDs 1 al 4) excepto el kicker
-    for i = 1, 4 do
-        if self.role_ids[i] ~= kicker_id then
-            table.insert(support_ids, self.role_ids[i])
+function PCoordinatedAttack:process()
+    local team = self.team
+
+    -- 1. Siempre ejecuta el arquero (ID 0)
+    self.tactic_goalkeeper:process(0, team)
+
+    -- 2. Consigue los robots de campo activos (IDs 1–5)
+    local robots = {}
+    local active_ids = {}
+    for id = 1, 5 do
+        local rob = Engine.get_robot_state(id, team)
+        if rob and rob.active then
+            table.insert(robots, rob)
+            table.insert(active_ids, id)
         end
     end
-
-    if not kicker_id or #support_ids == 0 then
-        print("[PCoordinatedAttack] Roles no definidos correctamente.")
-        self.state = "done"
-        return
-    end
-
-    local kicker = Engine.get_robot_state(kicker_id, team)
     local ball = Engine.get_ball_state()
-    if not kicker or not ball then
-        print("[PCoordinatedAttack] Estado inválido de robots o pelota.")
+    if not ball or #robots == 0 then
         self.state = "done"
-        return
+        return true
     end
 
-    -- Estado 1: Preparar/capturar pelota (idéntico a PAttack clásico)
+    -- 3. Elige kicker: el más cerca de la pelota
+    local kicker_idx = utils.get_closest_robot_to_point(robots, ball)
+    local kicker_id = active_ids[kicker_idx]
+    local kicker = Engine.get_robot_state(kicker_id, team)
+    -- 4. El resto son supports
+    local support_ids = {}
+    for _, id in ipairs(active_ids) do
+        if id ~= kicker_id then table.insert(support_ids, id) end
+    end
+
+    -- Al reiniciar play, limpia estado
+    if self._last_kicker ~= kicker_id then
+        self.state = "prepare"
+        self._chosen_support = nil
+        self.pass_tactic = nil
+        self.kick_tactic = nil
+        self._last_kicker = kicker_id
+    end
+
+    -- CHEQUEO CLAVE: Si la pelota está muy lejos de todos (ataque abortado)
+    local min_dist = math.huge
+    for _, rob in ipairs(robots) do
+        local d = utils.distance(rob, ball)
+        if d < min_dist then min_dist = d end
+    end
+    if min_dist > BALL_TOO_FAR_DIST then
+        print("[PCoordinatedAttack] Balón demasiado lejos de todos los robots. Fin de ataque.")
+        self.state = "done"
+        return true
+    end
+
+    -- Estado 1: Preparar/capturar pelota
     if self.state == "prepare" then
         self.attack_start_frame = nil
-        self._chosen_support = nil
-        self._support_positions = {}
         if utils.has_captured_ball(kicker, ball) then
-            print("[PCoordinatedAttack] Pelota capturada → ataque")
             self.state = "attack"
-            return
+            return false
         end
         local dist = utils.distance(kicker, ball)
         if dist < 0.8 then
             if SCaptureBall.process(kicker_id, team) then
-                print("[PCoordinatedAttack] Capturé la pelota → ataque")
                 self.state = "attack"
             end
-            return
+            return false
         else
-            print("[PCoordinatedAttack] Lejos de la pelota, termino play.")
             self.state = "done"
-            return
+            return true
         end
     end
 
-    -- Estado 2: Ataque (idéntico a la lógica de dos robots, pero con supports)
+    -- Estado 2: Ataque (como PAttack)
     if self.state == "attack" then
         if not self.attack_start_frame then
             self.attack_start_frame = frame_count()
         end
-
         local current_frame = frame_count()
         if current_frame - self.attack_start_frame > ATTACK_TIMEOUT_FRAMES then
-            print("[PCoordinatedAttack] ¡Timeout de ataque! Reiniciando play por seguridad.")
             self.state = "done"
-            return
+            return true
         end
-
         if not utils.has_captured_ball(kicker, ball) then
-            print("[PCoordinatedAttack] Perdí la pelota, termino play.")
             self.state = "done"
-            return
+            return true
         end
 
-        -- 1. INTENTA SIEMPRE EL DISPARO PRIMERO (como PAttack original)
+        -- 1. INTENTA DISPARO DIRECTO
         local obstacles = Engine.get_opponents(team)
         local clearance = 0.3
         local shot_distance = utils.distance(ball, GOAL_POS)
@@ -145,30 +168,35 @@ function PCoordinatedAttack:process(game_state)
                 self.kick_tactic = TKickToGoal.new()
             end
             if self.kick_tactic:process(kicker_id, team) then
-                print("[PCoordinatedAttack] Disparo realizado, termino play.")
                 self.state = "done"
+                return true
             end
-            return
+            return false
         end
 
-        -- 2. Los supports siempre avanzan en abanico (adelante del kicker)
-        self._support_positions = set_support_positions(kicker, support_ids, team)
-
-        -- 3. Elige un support random SOLO UNA VEZ por play (si no ha sido elegido)
+        -- 2. Elige un support random SOLO UNA VEZ por play
         if not self._chosen_support then
+            if #support_ids == 0 then
+                self.state = "done"
+                return true
+            end
             self._chosen_support = support_ids[math.random(1, #support_ids)]
         end
 
-        -- 4. Ejecuta el pase INMEDIATAMENTE, sin esperar que el support llegue
+        -- 3. SOLO los supports que NO son receptor se mueven a posición estratégica
+        set_other_supports_positions(kicker, support_ids, self._chosen_support, team)
+
+        -- 4. Ejecuta el pase de inmediato; TCoordinatedPass mueve y espera al receptor
         if not self.pass_tactic then
             self.pass_tactic = TCoordinatedPass.new(kicker_id, self._chosen_support, team, PASS_REGION)
         end
         if self.pass_tactic:process() then
-            print(string.format("[PCoordinatedAttack] Pase realizado de %d a %d, termino play.", kicker_id, self._chosen_support))
             self.state = "done"
+            return true
         end
-        return
+        return false
     end
+    return false
 end
 
 return PCoordinatedAttack
