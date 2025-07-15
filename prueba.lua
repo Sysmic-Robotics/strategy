@@ -44,7 +44,7 @@ function process()
     -- print("[MAIN] Ref command:", ref_cmd)
 
     if "STOP" == "STOP" then
-        play_ballplacement:process(game_state)
+        play_stop:process(game_state)
         return
     end
 end

@@ -15,11 +15,10 @@ local PASS_REGION = {
     y_max = 3.0
 }
 
--- Goal position para equipo azul (team = 0)
 local GOAL_POS = { x = 4.5, y = 0 }
+local MAX_SHOT_DISTANCE = 2.7   -- metros desde el arco
 
--- *** Parámetro nuevo: distancia máxima de disparo ***
-local MAX_SHOT_DISTANCE = 2.7   -- metros desde el arco (ajusta a gusto, por ej: 2.5 o 3)
+local ATTACK_TIMEOUT_FRAMES = 240  -- 4 segundos si el loop corre a 60 Hz
 
 function PAttack.new()
     return setmetatable({
@@ -29,6 +28,7 @@ function PAttack.new()
         _last_ball_speed = 0,
         pass_tactic = nil,
         kick_tactic = nil,
+        attack_start_frame = nil,  -- Nuevo: contador de frames en estado "attack"
     }, PAttack)
 end
 
@@ -38,6 +38,13 @@ end
 
 function PAttack:is_done(game_state)
     return self.state == "done"
+end
+
+-- Asume que tienes una función global frame_count() que retorna el ciclo actual (puedes cambiarlo por os.clock() si quieres en segundos)
+local global_frame = 0
+function frame_count()
+    global_frame = global_frame + 1
+    return global_frame
 end
 
 function PAttack:process(game_state)
@@ -62,13 +69,14 @@ function PAttack:process(game_state)
 
     -- Estado 1: Preparar/capturar pelota
     if self.state == "prepare" then
+        self.attack_start_frame = nil -- Reinicia el timeout
         if utils.has_captured_ball(kicker, ball) then
             print("[PAttack] Pelota capturada → ataque")
             self.state = "attack"
             return
         end
         local dist = utils.distance(kicker, ball)
-        if dist < 0.8 then
+        if dist < 3.8 then -- Ajusta el rango de captura según tu robot
             if SCaptureBall.process(kicker_id, team) then
                 print("[PAttack] Capturé la pelota → ataque")
                 self.state = "attack"
@@ -81,8 +89,21 @@ function PAttack:process(game_state)
         end
     end
 
-    -- Estado 2: Ataque
+    -- Estado 2: Ataque (con timeout)
     if self.state == "attack" then
+        -- Iniciar el contador solo la primera vez que entra a este estado
+        if not self.attack_start_frame then
+            self.attack_start_frame = frame_count()
+        end
+
+        -- Si se pasa del timeout, terminar la play
+        local current_frame = frame_count()
+        if current_frame - self.attack_start_frame > ATTACK_TIMEOUT_FRAMES then
+            print("[PAttack] ¡Timeout de ataque! Reiniciando play por seguridad.")
+            self.state = "done"
+            return
+        end
+
         if not utils.has_captured_ball(kicker, ball) then
             print("[PAttack] Perdí la pelota, termino play.")
             self.state = "done"
@@ -92,7 +113,6 @@ function PAttack:process(game_state)
         -- Revisar si puedo disparar directo
         local obstacles = Engine.get_opponents(team)
         local clearance = 0.3 -- Ajusta según tamaño robot
-        -- *** Cálculo de distancia del balón al arco ***
         local shot_distance = utils.distance(ball, GOAL_POS)
         if utils.is_path_clear(ball, GOAL_POS, obstacles, clearance)
            and shot_distance <= MAX_SHOT_DISTANCE then
@@ -106,7 +126,7 @@ function PAttack:process(game_state)
             end
             return
         else
-            print("[PAttack] Camino bloqueado o lejos (%.2f m), ejecuto pase a R%d", shot_distance, support_id)
+            print(string.format("[PAttack] Camino bloqueado o lejos (%.2f m), ejecuto pase a R%d", shot_distance, support_id))
             if not self.pass_tactic then
                 self.pass_tactic = TCoordinatedPass.new(kicker_id, support_id, team, PASS_REGION)
             end
