@@ -14,6 +14,7 @@ local function swap_roles()
     print(string.format("[PAttack] Swapped roles: [0] = %d, [1] = %d", roles[0], roles[1]))
 end
 
+
 grsim.teleport_robot(0, 0, -3.2, -0.5, 0)
 grsim.teleport_robot(1, 0, -3.2, 0.5, 0)
 grsim.teleport_ball(-3, -0.2)

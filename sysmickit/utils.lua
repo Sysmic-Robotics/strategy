@@ -176,4 +176,8 @@ function utils.is_path_clear(start, goal, obstacles, clearance)
 end
 
 
+
+
+
+
 return utils

@@ -1,34 +1,30 @@
--- pass_point_solver_forward.lua
+-- pass_point_solver_attack.lua
 local utils = require("sysmickit.utils")
 local api   = require("sysmickit.engine")
 
 local PassPointSolver = {}
 
--- Configuration parameters
-local MAX_ATTEMPTS = 4
-local SAFE_RADIUS = 0.25 -- safety distance around obstacles
+-- Config
+local MAX_ATTEMPTS = 7
+local SAFE_RADIUS = 0.25    -- safety distance around obstacles
+local ADVANCE_ZONE = 1.2    -- metros al arco: después de esto ya no fuerza avanzar (puedes cambiar)
 
---- Compute the squared Euclidean distance
 local function dist_sq(p1, p2)
     local dx = p1.x - p2.x
     local dy = p1.y - p2.y
     return dx * dx + dy * dy
 end
 
---- Compute minimum distance from point to line segment AB
 local function point_to_segment_distance(point, A, B)
     local dx, dy = B.x - A.x, B.y - A.y
     local length_sq = dx * dx + dy * dy
     if length_sq == 0 then return math.sqrt(dist_sq(point, A)) end
-
     local t = ((point.x - A.x) * dx + (point.y - A.y) * dy) / length_sq
     t = math.max(0, math.min(1, t))
-
     local proj = { x = A.x + t * dx, y = A.y + t * dy }
     return math.sqrt(dist_sq(point, proj))
 end
 
---- Check if the line from ball to point is clear of obstacles
 local function is_line_clear(ball, point, obstacles, safe_radius)
     for _, obs in ipairs(obstacles) do
         local dist = point_to_segment_distance(obs, ball, point)
@@ -39,9 +35,6 @@ local function is_line_clear(ball, point, obstacles, safe_radius)
     return true
 end
 
---- Sample a random point within a rectangular region
---- @param region table {x_min=number, x_max=number, y_min=number, y_max=number}
---- @return table {x=number, y=number}
 local function sample_point_in_region(region)
     return {
         x = utils.random_between(region.x_min, region.x_max),
@@ -49,7 +42,7 @@ local function sample_point_in_region(region)
     }
 end
 
---- Main solver function (prioriza pases hacia adelante)
+--- Main solver function
 --- @param ball table {x, y}
 --- @param receiver table {x, y}
 --- @param region table {x_min, x_max, y_min, y_max}
@@ -66,27 +59,32 @@ function PassPointSolver.find_best_pass_point(ball, receiver, region, min_dist, 
     local min_dist_sq = min_dist * min_dist
     local max_dist_sq = max_dist * max_dist
 
-    -- NUEVO: necesitas saber la dirección de avance
+    -- Dirección de avance (blue avanza a la derecha, yellow a la izquierda)
     local direction = (team == 0) and 1 or -1
     local kicker_x = ball.x
 
+    -- ¿Estamos cerca del arco? (zona de definición)
+    local goal_x = (team == 0) and 4.5 or -4.5
+    local dist_to_goal = math.abs(ball.x - goal_x)
+    local restrict_forward = dist_to_goal > ADVANCE_ZONE
+
     for _ = 1, num_samples or MAX_ATTEMPTS do
         local candidate = sample_point_in_region(region)
-
         local d_sq = dist_sq(ball, candidate)
 
-        -- FILTRO para priorizar avanzar: 
-        -- Para blue, candidate.x > kicker_x (avanza a la derecha)
-        -- Para yellow, candidate.x < kicker_x (avanza a la izquierda)
-        if direction * (candidate.x - kicker_x) < 0 then
-            -- El candidato está "hacia atrás", descartarlo
-            goto continue
+        -- Sólo filtrar avance si estamos lejos del arco
+        if restrict_forward then
+            if direction * (candidate.x - kicker_x) < 0 then
+                -- No avanzar: descartado
+                goto continue
+            end
         end
 
         if d_sq >= min_dist_sq and d_sq <= max_dist_sq and
            is_line_clear(ball, candidate, obstacles, SAFE_RADIUS) then
 
-            -- Puedes penalizar puntos menos adelantados aquí si quieres aún más avance.
+            -- Puedes modificar el score para premiar avance: penaliza menos mientras más cerca del arco esté el candidate.
+            -- Aquí sólo se prioriza cercanía al receiver
             local score = math.sqrt(dist_sq(candidate, receiver))
             if score < best_score then
                 best_score = score
