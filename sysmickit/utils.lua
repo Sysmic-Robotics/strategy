@@ -70,6 +70,9 @@ end
 -- @param b table {x, y}
 -- @return number
 function utils.distance(a, b)
+    if not a or not b or not a.x or not a.y or not b.x or not b.y then
+        return math.huge -- Devuelve distancia infinita si hay datos inválidos
+    end
     return math.sqrt((a.x - b.x)^2 + (a.y - b.y)^2)
 end
 
