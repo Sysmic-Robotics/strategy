@@ -43,13 +43,11 @@ function CoordinatedPass:process()
         )
 
         if not self.computedTarget then
-            print("[Pass] No valid target found in region")
             self.computedTarget = { x = receiverState.x, y = receiverState.y }
             return false
         end
 
         self.state = "prepare_pass"
-        print("computedTarget: " .. self.computedTarget.x .. "," .. self.computedTarget.y)
         return false
 
     elseif self.state == "prepare_pass" then
@@ -65,7 +63,6 @@ function CoordinatedPass:process()
 
         if ready >= 2 then
             self.state = "kick"
-            print(self.state)
         end
         return false
 
@@ -73,13 +70,11 @@ function CoordinatedPass:process()
         self.receiver:Aim(ball)
         if self.passer:KickToPoint(self.computedTarget) then
             self.state = "receive"
-            print(self.state)
         end
         return false
     elseif self.state == "receive" then
         if utils.distance(passerState, ball) < (0.30) then
             if self.receiver:CaptureBall() then
-                print("done")
                 return true
             end
         else

@@ -12,6 +12,6 @@ function process()
     end
     ]]
     if robot:CaptureBall() then
-        print("true")
+        print("Ball Captured")
     end
 end

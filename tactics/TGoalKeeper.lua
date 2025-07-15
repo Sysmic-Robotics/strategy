@@ -46,7 +46,7 @@ function TGoalkeeper:process(robot_id, team)
             self.state = "capture"
         else
             Mark.process(robot_id, team, mark_point)
-            aim.process(robot_id, team, ball, "mid")
+            aim.process(robot_id, team, ball)
         end
         return false
     end
@@ -58,7 +58,7 @@ function TGoalkeeper:process(robot_id, team)
             -- Sale adelante para tapar
             local block_x = (team == 0) and (goalie_x + 0.3) or (goalie_x - 0.3)
             move.process(robot_id, team, {x=block_x, y=target_y})
-            aim.process(robot_id, team, ball, "mid")
+            aim.process(robot_id, team, ball)
         end
         return false
     end
@@ -75,7 +75,7 @@ function TGoalkeeper:process(robot_id, team)
         -- Espera breve y vuelve a guard solo si la pelota salió del área
         self.cooldown = self.cooldown - 1
         Mark.process(robot_id, team, mark_point)
-        aim.process(robot_id, team, ball, "mid")
+        aim.process(robot_id, team, ball)
         if self.cooldown <= 0 and not ball_in_area then
             self.state = "guard"
         end
