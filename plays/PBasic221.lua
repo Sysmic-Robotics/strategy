@@ -16,9 +16,10 @@ local DEF_ZONES = {
     {x = -1.5, y = -2.0},
 }
 
-function PBasic221Global.new(team)
+function PBasic221Global.new(team_setting)
     local self = setmetatable({}, PBasic221Global)
-    self.team = team or 0
+    self.team = team_setting.team
+    self.goalkeeper_id = team_setting.goalkeeper_id
     self.tactic_goalkeeper = TGoalkeeper.new()
     self.tactics_def       = {}
     for i=1, #DEF_ZONES do
@@ -31,7 +32,7 @@ end
 
 function PBasic221Global:process(game_state)
     -- 1. Arquero (ID 0 siempre)
-    self.tactic_goalkeeper:process(0, self.team)
+    self.tactic_goalkeeper:process(self.tactic_goalkeeper, self.team)
 
     -- 2. Robots activos de campo (IDs 1–5)
     local robots = {}
@@ -72,7 +73,6 @@ function PBasic221Global:process(game_state)
     local captured = self.capture_tactic.process(attacker_id, self.team)
     -- 6. El atacante intenta capturar la pelota
     if captured then
-        print("[PBasic221Global] ¡Pelota capturada por el robot", attacker_id, "!")
         if game_state then
             game_state.in_offense = true
             game_state.in_defense = false
