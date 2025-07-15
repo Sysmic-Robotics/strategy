@@ -1,10 +1,11 @@
-local PBasic221 = require("plays.PBasic221")
-local play = PBasic221.new(0) -- 0 para azul, o usa el team que corresponda
+local TGoalkeeper = require("tactics.TGoalkeeper")
+local Engine      = require("sysmickit.engine")
 
--- Dentro de tu loop principal:
-play:process(game_state)
+local team = 0        -- Cambia a 1 si juegas de amarillo
+local goalie_id = 0   -- ID de tu arquero
+
+local keeper = TGoalkeeper.new(goalie_id, team)
 
 function process()
-  play:process()
+    keeper:process()
 end
-
