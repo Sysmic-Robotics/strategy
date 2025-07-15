@@ -1,8 +1,9 @@
-local Engine          = require("sysmickit.engine")
-local utils           = require("sysmickit.utils")
-local SCaptureBall    = require("skills.SCaptureBall")
-local TKickToGoal     = require("tactics.TKickToGoal")
-local TCoordinatedPass= require("tactics.TCoordinatedPass")
+-- File: plays/PCoordinatedAttack.lua
+local Engine           = require("sysmickit.engine")
+local utils            = require("sysmickit.utils")
+local SCaptureBall     = require("skills.SCaptureBall")
+local TKickToGoal      = require("tactics.TKickToGoal")
+local TCoordinatedPass = require("tactics.TCoordinatedPass")
 
 local PCoordinatedAttack = {}
 PCoordinatedAttack.__index = PCoordinatedAttack
@@ -17,7 +18,6 @@ local PASS_REGION = {
 local GOAL_POS = { x = 4.5, y = 0 }
 local MAX_SHOT_DISTANCE = 2.7   -- metros desde el arco
 local ATTACK_TIMEOUT_FRAMES = 240  -- 4 segundos si el loop corre a 60 Hz
-local SUPPORT_READY_DIST = 0.25    -- cuán cerca debe estar el support a su destino para recibir el pase
 local ADVANCE_OFFSET = 0.8
 local FORMATION_WIDTH = 2.5
 
@@ -71,6 +71,7 @@ function PCoordinatedAttack:process(game_state)
     local team = game_state.team or 0
     local kicker_id = self.role_ids[0]
     local support_ids = {}
+    -- Recorre los roles (IDs 1 al 4) excepto el kicker
     for i = 1, 4 do
         if self.role_ids[i] ~= kicker_id then
             table.insert(support_ids, self.role_ids[i])
@@ -91,7 +92,7 @@ function PCoordinatedAttack:process(game_state)
         return
     end
 
-    -- Estado 1: Preparar/capturar pelota (idéntico al PAttack clásico)
+    -- Estado 1: Preparar/capturar pelota (idéntico a PAttack clásico)
     if self.state == "prepare" then
         self.attack_start_frame = nil
         self._chosen_support = nil
@@ -115,7 +116,7 @@ function PCoordinatedAttack:process(game_state)
         end
     end
 
-    -- Estado 2: Ataque (idéntico a la lógica dos robots, pero con supports)
+    -- Estado 2: Ataque (idéntico a la lógica de dos robots, pero con supports)
     if self.state == "attack" then
         if not self.attack_start_frame then
             self.attack_start_frame = frame_count()
@@ -134,7 +135,7 @@ function PCoordinatedAttack:process(game_state)
             return
         end
 
-        -- 1. INTENTA SIEMPRE EL DISPARO PRIMERO (tal como PAttack original)
+        -- 1. INTENTA SIEMPRE EL DISPARO PRIMERO (como PAttack original)
         local obstacles = Engine.get_opponents(team)
         local clearance = 0.3
         local shot_distance = utils.distance(ball, GOAL_POS)
@@ -150,29 +151,15 @@ function PCoordinatedAttack:process(game_state)
             return
         end
 
-        -- 2. TODOS LOS SUPPORTS AVANZAN INMEDIATO AL ENTRAR EN ATTACK
+        -- 2. Los supports siempre avanzan en abanico (adelante del kicker)
         self._support_positions = set_support_positions(kicker, support_ids, team)
 
-        -- 3. Elige un support random SOLO UNA VEZ por play
+        -- 3. Elige un support random SOLO UNA VEZ por play (si no ha sido elegido)
         if not self._chosen_support then
             self._chosen_support = support_ids[math.random(1, #support_ids)]
         end
 
-        -- 4. Espera que el support elegido esté "cerca" de su posición antes de ejecutar el pase
-        local idx = nil
-        for i, id in ipairs(support_ids) do
-            if id == self._chosen_support then idx = i end
-        end
-        if idx then
-            local support_robot = Engine.get_robot_state(self._chosen_support, team)
-            local target_pos = self._support_positions[idx]
-            if not support_robot or not target_pos or utils.distance(support_robot, target_pos) > SUPPORT_READY_DIST then
-                -- Sigue avanzando hasta que el receptor esté listo
-                return
-            end
-        end
-
-        -- 5. Ejecuta el pase exactamente igual que en PAttack original
+        -- 4. Ejecuta el pase INMEDIATAMENTE, sin esperar que el support llegue
         if not self.pass_tactic then
             self.pass_tactic = TCoordinatedPass.new(kicker_id, self._chosen_support, team, PASS_REGION)
         end
