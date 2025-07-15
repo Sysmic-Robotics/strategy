@@ -17,13 +17,20 @@ local DEF_ZONES = {
     {x = -1.5, y = -1.0},
     {x = -1.5, y = -2.0},
 }
+-- Área válida donde buscar el punto de pase
+local PASS_REGION = {
+    x_min = -4.5,
+    x_max = 6.0,
+    y_min = -3.0,
+    y_max = 3.0
+}
 
 function PBasic221Global.new(team)
     local self = setmetatable({}, PBasic221Global)
     self.team = team or 0
     self.tactic_goalkeeper = TGoalkeeper.new()
     self.tactic_attack     = TKickToGoal.new()
-    self.tactic_pass       = TCoordinatedPass.new()
+    self.tactic_pass       = nil
     self.tactics_def       = {}
     for i=1, #DEF_ZONES do
         self.tactics_def[i] = TMarkZone.new()
@@ -98,7 +105,18 @@ function PBasic221Global:process(game_state)
         end
         if receiver_id then
             print("[PBasic221Global] Atacante", attacker_id, "pasa a", receiver_id)
-            self.tactic_pass:process(attacker_id, self.team, receiver_id)
+        
+            if (not self.tactic_pass)
+                or (self.tactic_pass.passer.id ~= attacker_id)
+                or (self.tactic_pass.receiver.id ~= receiver_id) then
+                self.tactic_pass = TCoordinatedPass.new(attacker_id, receiver_id, self.team, PASS_REGION)
+            end
+
+            local done = self.tactic_pass:process()
+            if done then
+                self.tactic_pass = nil
+            end
+            
         else
             print("[PBasic221Global] No hay receptor válido, atacante intenta disparar")
             shot_done = self.tactic_attack:process(attacker_id, self.team)

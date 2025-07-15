@@ -36,6 +36,11 @@ function CoordinatedPass:process()
     local passerState = api.get_robot_state(self.passer.id, self.passer.team)
     local receiverState = api.get_robot_state(self.receiver.id, self.receiver.team)
 
+    if not ball or not passerState or not receiverState then
+        print("[CoordinatedPass] Missing ball, passer, or receiver state.")
+        return false
+    end
+
     if self.state == "init" then
         self.lastBallPos = { x = ball.x, y = ball.y }
         self.computedTarget = PassPointSolver.find_best_pass_point(
