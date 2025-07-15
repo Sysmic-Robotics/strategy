@@ -24,6 +24,11 @@ local PASS_REGION = {
     y_min = -3.0,
     y_max = 3.0
 }
+-- Posición del arco rival (asumiendo eje x positivo)
+local GOAL_POS = { x = 4.5, y = 0 }
+
+-- Distancia máxima para habilitar el disparo directo
+local MAX_SHOT_DISTANCE = 2.7
 
 function PBasic221Global.new(team)
     local self = setmetatable({}, PBasic221Global)
@@ -83,9 +88,16 @@ function PBasic221Global:process(game_state)
     -- 6. Ataque: ¿disparar o pasar?
     local attacker = Engine.get_robot_state(attacker_id, self.team)
     local dist_to_ball = utils.distance(attacker, ball)
-    local can_shoot = dist_to_ball < 1.0 -- Puedes ajustar este umbral
+
+    local dist_to_goal = utils.distance(ball, GOAL_POS)
+    local can_shoot = (dist_to_goal <= MAX_SHOT_DISTANCE) and (dist_to_ball < 1.0)
     local shot_done = false
 
+
+    print("[PBasic221Global] Atacante:", attacker_id,
+          "Distancia a balón:", dist_to_ball,
+          "Distancia a arco:", dist_to_goal,
+          "Defensores:", table.concat(defenders, ", "))
     print("[PBasic221Global] Atacante:", attacker_id, "Distancia a balón:", dist_to_ball, "Defensores:", table.concat(defenders, ", "))
 
     if can_shoot or #defenders == 0 then
