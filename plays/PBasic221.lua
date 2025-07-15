@@ -3,7 +3,7 @@ local Engine           = require("sysmickit.engine")
 local utils            = require("sysmickit.utils")
 local TGoalkeeper      = require("tactics.TGoalkeeper")
 local TKickToGoal      = require("tactics.TKickToGoal")
-local TCoordinatedPass = require("tactics.TCoordinatedPass")
+local TCoordinatedPass = require("tactics.TCoordinatedPass2")
 local TMarkZone        = require("tactics.TMarkZone")
 
 local PBasic221Global = {}
