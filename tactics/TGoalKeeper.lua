@@ -1,6 +1,10 @@
-local Engine = require("sysmickit.engine")
-local Robot = require("sysmickit.robot")
-local utils = require("sysmickit.utils")
+local api = require("sysmickit.engine")
+local Mark = require("skills.mark")
+local move = require("skills.SMove")
+local aim = require("skills.SAim")
+local SCapture = require("skills.SCaptureBall")
+
+
 
 local TGoalkeeper = {}
 TGoalkeeper.__index = TGoalkeeper

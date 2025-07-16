@@ -177,10 +177,54 @@ function utils.is_path_clear(start, goal, obstacles, clearance)
     end
     return true
 end
+--- Devuelve la región válida de pase según el lado de ataque
+function utils.get_pass_region(play_side)
+    if play_side == "left" then
+        -- Atacas a la derecha (x positivo)
+        return { x_min = 0.0, x_max = 4.5, y_min = -2.5, y_max = 2.5 }
+    else
+        -- Atacas a la izquierda (x negativo)
+        return { x_min = -4.5, x_max = 0.0, y_min = -2.5, y_max = 2.5 }
+    end
+end
+
+--- Corrige un punto que cae fuera del campo o en área de arquero
+function utils.clamp_to_field(point)
+    local x = math.max(-4.4, math.min(point.x, 4.4))
+    local y = math.max(-2.9, math.min(point.y, 2.9))
+    if point.x >= -4.5 and point.x <= -3.5 and y >= -1.0 and y <= 1.0 then
+        x = -3.49
+    end
+    if point.x >= 3.5 and point.x <= 4.5 and y >= -1.0 and y <= 1.0 then
+        x = 3.49
+    end
+    return {x=x, y=y}
+end
+
+--- Devuelve la posición del arco rival y la dirección de avance
+function utils.get_goal_pos_and_direction(play_side)
+    if play_side == "left" then
+        return { x = 4.5, y = 0 }, 1
+    else
+        return { x = -4.5, y = 0 }, -1
+    end
+
+    
+end
 
 
+function utils.is_in_goalie_area(point)
+    return (point.x >= -4.5 and point.x <= -3.5 and point.y >= -1.0 and point.y <= 1.0)
+        or (point.x >= 3.5 and point.x <= 4.5 and point.y >= -1.0 and point.y <= 1.0)
+end
 
+function utils.is_out_of_field(point)
+    return point.x < -4.5 or point.x > 4.5 or point.y < -3.0 or point.y > 3.0
+end
 
+function utils.is_in_restricted_area(point)
+    return utils.is_in_goalie_area(point) or utils.is_out_of_field(point)
+end
 
 
 return utils

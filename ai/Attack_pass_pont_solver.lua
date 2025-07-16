@@ -4,10 +4,9 @@ local api   = require("sysmickit.engine")
 
 local PassPointSolver = {}
 
--- Config
 local MAX_ATTEMPTS = 7
-local SAFE_RADIUS = 0.25    -- safety distance around obstacles
-local ADVANCE_ZONE = 1.2    -- metros al arco: después de esto ya no fuerza avanzar (puedes cambiar)
+local SAFE_RADIUS = 0.25
+local ADVANCE_ZONE = 1.2
 
 local function dist_sq(p1, p2)
     local dx = p1.x - p2.x
@@ -50,8 +49,10 @@ end
 --- @param max_dist number
 --- @param num_samples number
 --- @param team number (0=blue, 1=yellow)
+--- @param play_side string ("left" o "right")
 --- @return table? best point {x, y} or nil
-function PassPointSolver.find_best_pass_point(ball, receiver, region, min_dist, max_dist, num_samples, team)
+function PassPointSolver.find_best_pass_point(ball, receiver, region, min_dist, max_dist, num_samples, team, play_side)
+    play_side = play_side or "right"
     local obstacles = api.get_all_robots_positions()
 
     local best_point = nil
@@ -59,12 +60,11 @@ function PassPointSolver.find_best_pass_point(ball, receiver, region, min_dist, 
     local min_dist_sq = min_dist * min_dist
     local max_dist_sq = max_dist * max_dist
 
-    -- Dirección de avance (blue avanza a la derecha, yellow a la izquierda)
-    local direction = (team == 0) and 1 or -1
+    -- NUEVO: Dirección de avance según lado de juego
+    local direction = (play_side == "right") and 1 or -1
     local kicker_x = ball.x
 
-    -- ¿Estamos cerca del arco? (zona de definición)
-    local goal_x = (team == 0) and 4.5 or -4.5
+    local goal_x = (play_side == "right") and 4.5 or -4.5
     local dist_to_goal = math.abs(ball.x - goal_x)
     local restrict_forward = dist_to_goal > ADVANCE_ZONE
 
@@ -72,10 +72,9 @@ function PassPointSolver.find_best_pass_point(ball, receiver, region, min_dist, 
         local candidate = sample_point_in_region(region)
         local d_sq = dist_sq(ball, candidate)
 
-        -- Sólo filtrar avance si estamos lejos del arco
+        -- Solo filtrar avance si estamos lejos del arco
         if restrict_forward then
             if direction * (candidate.x - kicker_x) < 0 then
-                -- No avanzar: descartado
                 goto continue
             end
         end
@@ -83,8 +82,6 @@ function PassPointSolver.find_best_pass_point(ball, receiver, region, min_dist, 
         if d_sq >= min_dist_sq and d_sq <= max_dist_sq and
            is_line_clear(ball, candidate, obstacles, SAFE_RADIUS) then
 
-            -- Puedes modificar el score para premiar avance: penaliza menos mientras más cerca del arco esté el candidate.
-            -- Aquí sólo se prioriza cercanía al receiver
             local score = math.sqrt(dist_sq(candidate, receiver))
             if score < best_score then
                 best_score = score

@@ -1,6 +1,4 @@
 -- tactics/CoordinatedPass.lua
--- Pass the ball from a specific robot to another robot in a specific region
-
 local api     = require("sysmickit.engine")
 local Robot   = require("sysmickit.robot")
 local PassPointSolver = require("AI.Attack_pass_pont_solver")
@@ -14,10 +12,11 @@ CoordinatedPass.__index = CoordinatedPass
 --- @param receiverId number The ID of the receiver robot
 --- @param team number The team both robots belong to
 --- @param region table Target pass region {x_min, x_max, y_min, y_max}
-function CoordinatedPass.new(passerId, receiverId, team, region)
+--- @param play_side string "left" o "right" (default: "right")
+function CoordinatedPass.new(passerId, receiverId, team, region, play_side)
     local passer = Robot.new(passerId, team)
     local receiver = Robot.new(receiverId, team)
-
+    play_side = play_side or "right"
     return setmetatable({
         state = "init",
         lastBallPos = { x = 0, y = 0 },
@@ -25,21 +24,22 @@ function CoordinatedPass.new(passerId, receiverId, team, region)
         passer = passer,
         receiver = receiver,
         region = region,
+        play_side = play_side,
     }, CoordinatedPass)
 end
 
 --- Run one step of this pass tactic.
 --- @return boolean true when this cycle is done
 function CoordinatedPass:process()
-
     local ball = api.get_ball_state()
     local passerState = api.get_robot_state(self.passer.id, self.passer.team)
     local receiverState = api.get_robot_state(self.receiver.id, self.receiver.team)
 
+    -- 1. Calcular punto objetivo para el pase (ajusta con play_side)
     if self.state == "init" then
         self.lastBallPos = { x = ball.x, y = ball.y }
         self.computedTarget = PassPointSolver.find_best_pass_point(
-            ball, receiverState, self.region, 0.25, 2.0, 15, self.passer.team
+            ball, receiverState, self.region, 0.25, 2.0, 15, self.passer.team, self.play_side
         )
 
         if not self.computedTarget then
@@ -71,6 +71,7 @@ function CoordinatedPass:process()
 
     elseif self.state == "kick" then
         self.receiver:Aim(ball)
+        -- (puedes agregar lógica extra si el lado afecta cómo se patea)
         if self.passer:KickToPoint(self.computedTarget) then
             self.state = "receive"
             print(self.state)
@@ -90,4 +91,3 @@ function CoordinatedPass:process()
 end
 
 return CoordinatedPass
-
