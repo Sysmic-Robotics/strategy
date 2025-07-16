@@ -3,7 +3,7 @@ local utils = require("sysmickit.utils")
 
 local Move = {}
 
-local DEFAULT_POSITION_THRESHOLD = 0.05
+local DEFAULT_POSITION_THRESHOLD = 0.01
 
 --- @param id number Robot id
 --- @param team number Robot team
