@@ -1,7 +1,6 @@
 local utils = require("sysmickit.utils")
 local Robot = require("sysmickit.robot")
 local FieldZones = require("sysmickit.fieldzones")
-local Vector2D = require("sysmickit.vector2D")
 local Engine = require("sysmickit.engine")
 
 local Defense221 = {}
@@ -64,7 +63,7 @@ function Defense221:process()
                             best = pt
                         end
                     end
-                    robot:KickToPoint(best)
+                    robot:PivotKick(best)
                 else
                     robot:CaptureBall()
                 end
@@ -156,7 +155,7 @@ function Defense221:process()
                 -- Si hay camino libre al arco, patea
                 local path_clear = utils.is_path_clear(states[i], arco, Engine.get_opponents(self.team), 0.25)
                 if path_clear then
-                    robot:KickToPoint(arco)
+                    robot:PivotKick(arco)
                 else
                     -- Si no hay camino, busca un compañero desmarcado más cerca del arco
                     local best_teammate = nil
@@ -174,7 +173,7 @@ function Defense221:process()
                         end
                     end
                     if best_teammate then
-                        robot:KickToPoint(best_teammate)
+                        robot:PivotKick(best_teammate)
                     else
                         -- Si no hay pase claro, intenta capturar/controlar la pelota
                         robot:CaptureBall()

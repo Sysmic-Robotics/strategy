@@ -25,7 +25,7 @@ function PIDTuner:new(axis, dt)
         return avg
     end
 
-    self.twiddle = Twiddle:new(self.controller, get_error, {1.0, 0.0}, {0.01, 0.001}, 0.01)
+    self.twiddle = Twiddle:new(self.controller, get_error, {7.0, 0.09}, {0.01, 0.001}, 0.01)
 
     return self
 end
@@ -58,7 +58,7 @@ function PIDTuner:tune(id, team, vel_ref)
     -- Ejecutar Twiddle cada 60 pasos
     if self.error_count >= 60 then
         if not self.twiddle:step() then
-            print(string.format("%s gains: Kp=%.3f, Ki=%.3f", self.axis, self.controller.kp, self.controller.ki))
+            print(string.format("%s gains: Kp=%.3f, Ki=%.3f, vel_local=%.3f", self.axis, self.controller.kp, self.controller.ki, vel_local))
         end
     end
 end

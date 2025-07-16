@@ -1,10 +1,9 @@
 local Defense221 = require("routines.Defense221")
 local TGoalkeeper  = require("tactics.TGoalKeeper")
-local Engine = require("sysmickit.engine")
 -- Estado global de juego (ejemplo)
 
 local TEAM_SETTING = {
-    team  = 0,
+    team  = 1,
     goalkeeper_id = 5,
     robots_ids = {0,1,2,3,4},
     play_side = "left"
@@ -19,7 +18,6 @@ local game_state = {
 -- Instanciar la play defensiva y ofensiva
 
 local defensive_play = Defense221.new(TEAM_SETTING)
-
 
 local goal_keeper = TGoalkeeper.new(TEAM_SETTING.goalkeeper_id, TEAM_SETTING.team)
 function process()

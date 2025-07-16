@@ -77,8 +77,8 @@ end
 --- @param kd number? (optional) Derivative gain. Default is 0.1.
 --- @return nil
 function Engine.face_to(robotId, team, point, kp, ki, kd)
-    kp = kp or 1.0
-    ki = ki or 1.0
+    kp = kp or 3.5
+    ki = ki or 0.7
     kd = kd or 0.1
     face_to(robotId, team, point, kp, ki, kd)
 end
