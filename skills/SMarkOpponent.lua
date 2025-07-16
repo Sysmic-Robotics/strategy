@@ -8,6 +8,7 @@ local M = {}
 --- Mark an opponent by staying between them and our goal, facing the opponent.
 --- process returns true when robot is at target and facing opponent, false otherwise.
 function M.process(robotId, team, opponentId)
+    -- Parametro para definir la fuerza con la que se marca
     local alpha = 0.7
     local opponent = engine.get_robot_state(opponentId, 1 - team)
     if not opponent or not opponent.active then return false end

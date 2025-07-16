@@ -52,8 +52,7 @@ FieldZones.RIGHT_BELOW = {
 FieldZones.MIDFIELD = {
     {
         x_min = -1.5, x_max = 1.5,
-        y_min = -3.0,
-        y_max = 3.0
+        y_min = -3.0, y_max = 3.0
     }
 }
 
