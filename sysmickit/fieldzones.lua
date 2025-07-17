@@ -1,7 +1,7 @@
 local FieldZones = {}
 
 -- Each zone is a rectangle: { x_min, x_max, y_min, y_max }
-FieldZones.LEFT_ABOVE = {
+FieldZones.ZONE_0 = {
     {
         x_min = -3.5, x_max = -1.5,
         y_min = 0.0, y_max = 1.0
@@ -12,20 +12,22 @@ FieldZones.LEFT_ABOVE = {
     }
 }
 
-
-FieldZones.LEFT_BELOW = {
+FieldZones.ZONE_1 = {
     {
-        x_min = -3.5, x_max = -1.5,
-        y_min = -1.0, y_max = 0.0
-    },
-    {
-        x_min = -4.5, x_max = -1.5,
-        y_min = -3.0, y_max = -1.0
+        x_min = -1.5, x_max = 1.5,
+        y_min = 0.0, y_max = 3.0
     }
 }
 
 
-FieldZones.RIGHT_ABOVE = {
+FieldZones.ZONE_4 = {
+    {
+        x_min = -1.5, x_max = 1.5,
+        y_min = -3.0, y_max = 0.0
+    }
+}
+
+FieldZones.ZONE_2 = {
     {
         x_min = 1.5, x_max = 3.5,
         y_min = 0.0, y_max = 1.0
@@ -37,7 +39,22 @@ FieldZones.RIGHT_ABOVE = {
 }
 
 
-FieldZones.RIGHT_BELOW = {
+
+FieldZones.ZONE_3 = {
+    {
+        x_min = -3.5, x_max = -1.5,
+        y_min = -1.0, y_max = 0.0
+    },
+    {
+        x_min = -4.5, x_max = -1.5,
+        y_min = -3.0, y_max = -1.0
+    }
+}
+
+
+
+
+FieldZones.ZONE_5 = {
     {
         x_min = 1.5, x_max = 3.5,
         y_min = -3.0, y_max = -1.0
@@ -48,11 +65,18 @@ FieldZones.RIGHT_BELOW = {
     }
 }
 
-
-FieldZones.MIDFIELD = {
+FieldZones.GOALI_ZONE_LEFT = {
     {
-        x_min = -1.5, x_max = 1.5,
-        y_min = -3.0, y_max = 3.0
+        x_min = -4.5, x_max = -3.5,
+        y_min = -1.0, y_max = 1.0
+    },
+}
+
+
+FieldZones.GOALI_ZONE_RIGHT = {
+    {
+        x_min = 3.5, x_max = 4.5,
+        y_min = -1.0, y_max = 1.0
     }
 }
 
@@ -76,6 +100,41 @@ function FieldZones.random_point_in_zone(zone)
         y = math.random() * (rect.y_max - rect.y_min) + rect.y_min
     }
 end
+
+-- Utility: get the center point of the whole zone (bounding box center)
+function FieldZones.center_point_in_zone(zone)
+    local x_min, x_max = math.huge, -math.huge
+    local y_min, y_max = math.huge, -math.huge
+
+    for _, rect in ipairs(zone) do
+        if rect.x_min < x_min then x_min = rect.x_min end
+        if rect.x_max > x_max then x_max = rect.x_max end
+        if rect.y_min < y_min then y_min = rect.y_min end
+        if rect.y_max > y_max then y_max = rect.y_max end
+    end
+    local x = (x_min + x_max) / 2
+    local y = (y_min + y_max) / 2
+    return {
+        x = (x_min + x_max) / 2,
+        y = (y_min + y_max) / 2
+    }
+end
+
+
+function FieldZones.get_enemy_in_zone(zone, enemies)
+    assert(zone ~= nil, "Zone is nil")
+    assert(type(zone) == "table", "Zone is not a table")
+    local inside = {}
+    for _, enemy in ipairs(enemies) do
+        local point = { x = enemy.x, y = enemy.y }
+        if FieldZones.is_in_zone(point, zone) then
+            table.insert(inside, enemy)
+        end
+    end
+
+    return inside
+end
+
 
 
 return FieldZones

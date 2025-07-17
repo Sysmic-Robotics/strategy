@@ -6,13 +6,12 @@ local SKick         = require("skills.SKick")
 local SPivotAim     = require("skills.SPivotAim")
 local SPivotKick    = require("skills.SPivotKick")
 local Intercept     = require("skills.intercept")
-local Mark          = require("skills.mark")
+local SMark          = require("skills.SMark")
 local PassReceiver  = require("skills.pass_receiver")
 local KickToPoint   = require("skills.kick_to_point")
 local SCircleAroundBall = require("skills.SCircleAroundBall")
 local SDribbleMove = require("skills.SDribbleMove")
 local SQuickShot = require("skills.SQuickShot")
-local MarkOpponent          = require("skills.SMarkOpponent")
 local Engine = require("sysmickit.engine")
 local ReceiveBall = require("skills.SBallReceive")
 local Robot = {}
@@ -62,13 +61,8 @@ function Robot:Intercept(target)
 end
 
 function Robot:Mark(target)
-    return Mark.process(self.id, self.team,target)
+    return SMark.process(self.id, self.team, target, 1 - self.team)
 end
-
-function Robot:MarkOpponent(opponentId)
-    return MarkOpponent.process(self.id, self.team,opponentId)
-end
-
 function Robot:PassReceiver()
     return PassReceiver.process(self.id, self.team)
 end
@@ -76,6 +70,8 @@ end
 function Robot:KickToPoint(target)
     return KickToPoint.process(self.id, self.team, target)
 end
+
+
 function Robot:SCircleAroundBall(direction)
     return SCircleAroundBall.process(self.id,self.team,direction)
 end
@@ -91,5 +87,6 @@ end
 function Robot:ReceiveBall()
     return ReceiveBall.process(self.id, self.team)
 end
+
 
 return Robot

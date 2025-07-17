@@ -40,7 +40,7 @@ function SPivot.process(robotId, team, target)
     -- 3. Move to position behind ball and aim
     local dist_to_ball = utils.distance(robot, ball)
     if dist_to_ball < 0.30 then
-        SAim.process(robotId, team, ball, "medium")
+        SAim.process(robotId, team, ball)
     end
     move.process(robotId, team, approach_target)
 

@@ -30,7 +30,7 @@ function M.process(robotId, teamId, target)
     local ball = api.get_ball_state()
     -- 4) Dirección normalizada de la bola al target
     local dir = Vector2D:sub(target, ball)
-    local norm = Vector2D:normalized(dir)
+    local norm = Vector2D:normalized()
 
     -- 5) Punto de empuje: un poco más allá de la bola
     local pushPoint = {
