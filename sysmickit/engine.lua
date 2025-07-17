@@ -179,15 +179,14 @@ end
 -------------------------------------------------------------------
 --- @return table[] List of blue team robot states.
 function Engine.get_blue_team_state()
-    local all_robots = get_yellow_team_state()
+    local all_robots = get_blue_team_state()
     local active_robots = {}
 
     for _, robot in pairs(all_robots) do
-        if robot.is_active then
+        if robot.active then
             table.insert(active_robots, robot)
         end
     end
-
     return active_robots
 end
 ------------------------------------------------------------------------
@@ -210,11 +209,10 @@ function Engine.get_yellow_team_state()
     local active_robots = {}
 
     for _, robot in pairs(all_robots) do
-        if robot.is_active then
+        if robot.active then
             table.insert(active_robots, robot)
         end
     end
-
     return active_robots
 end
 
