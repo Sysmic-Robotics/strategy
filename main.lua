@@ -12,6 +12,7 @@ local Robot = require("sysmickit.robot")
 local OurKickOff = require("routines.OurKickOff")
 local TheirKickOff = require("routines.TheirKickOff")
 local Baile = require("routines.Baile")
+local AttackDummy = require("routines.AttackDummy")
 
 local TEAM_SETTING = {
     team  = 0,
@@ -28,7 +29,7 @@ local in_defense = false
 
 --  Play
 local defensive_play = Defense221.new(TEAM_SETTING)
-
+local attack_dummy  = AttackDummy.new(TEAM_SETTING)
 -- Special cases
 local our_kick_off = OurKickOff.new(TEAM_SETTING)
 local their_kick_off = TheirKickOff.new(TEAM_SETTING)
@@ -42,10 +43,12 @@ function process()
     WORLD:process()
     ref_command = Engine.get_ref_message()
     game_state = REFEERE_TO_GAME_STATE.referee_play_translator(ref_command, TEAM_SETTING)
+    game_state = "PLAY"
     if game_state == "PLAY" then
         -- Aqui las plays normales
         TGoalkeeper.process(TEAM_SETTING.goalkeeper_id, TEAM_SETTING.team, TEAM_SETTING.play_side)
         --defensive_play:process()
+        attack_dummy:process()
     elseif game_state == "TIME_OUT" then
         baile:process()
     elseif game_state == "BALL_PLACEMENT" then
