@@ -23,7 +23,7 @@ function Aim.process(id, team, target)
         return true
     end
 
-    Engine.face_to(id, team, target)
+    Engine.face_to(id, team, target,4,0.7,0)
     return false
 end
 

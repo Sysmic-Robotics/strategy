@@ -31,6 +31,7 @@ function M.process(robotId, team)
     -- Distance check to decide movement direct or movement with path planning
     if utils.distance(robot, robot_to_ball) > SAFE_DISTANCE then
         SMove.process(robotId, team, robot_to_ball)
+
     else
         -- Make sure to always approach the ball while is aiming
         if SAim.process(robotId, team, ball) then
