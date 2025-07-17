@@ -14,6 +14,7 @@ local SDribbleMove = require("skills.SDribbleMove")
 local SQuickShot = require("skills.SQuickShot")
 local Engine = require("sysmickit.engine")
 local ReceiveBall = require("skills.SBallReceive")
+local Stop = require("skills.Stop")
 local Robot = {}
 Robot.__index = Robot
 
@@ -88,5 +89,8 @@ function Robot:ReceiveBall()
     return ReceiveBall.process(self.id, self.team)
 end
 
-
+function Robot:Stop()
+    Stop.process(self.id, self.team)
+    return true
+end
 return Robot

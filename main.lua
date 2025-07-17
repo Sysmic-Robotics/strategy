@@ -2,7 +2,8 @@ local Defense221 = require("routines.Defense221")
 local TGoalkeeper  = require("tactics.TGoalKeeper")
 local TDefendZone = require("tactics.TDefendZone")
 local FieldZones = require("sysmickit.fieldzones")
-
+local HaltPlay = require("routines.Halt")
+local Engine = require("sysmickit.engine")
 
 -- Estado global de juego (ejemplo)
 local world_class = require("sysmickit.world")
@@ -27,11 +28,26 @@ local game_state = {
 -- Instanciar la play defensiva y ofensiva
 
 local defensive_play = Defense221.new(TEAM_SETTING)
+local halt = HaltPlay.new(TEAM_SETTING)
 
+
+local ref_command = "HALT"
 function process()
     WORLD:process()
-    TGoalkeeper.process(TEAM_SETTING.goalkeeper_id, TEAM_SETTING.team, TEAM_SETTING.play_side)
-    defensive_play:process()
-    --TDefendZone:process(0,TEAM_SETTING.team, FieldZones.ZONE_0)
+    --ref_command = Engine.get_ref_message()
+    if ref_command == "FORCE_START" then
+        -- Aqui las plays normales
+        TGoalkeeper.process(TEAM_SETTING.goalkeeper_id, TEAM_SETTING.team, TEAM_SETTING.play_side)
+        defensive_play:process()
+
+
+        
+    elseif ref_command == "HALT" then
+        halt:process()
+    else
+        print(ref_command)
+    end
+
+    
 
 end
