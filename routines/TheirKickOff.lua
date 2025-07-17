@@ -2,13 +2,14 @@
 
 local Robot = require("sysmickit.robot")
 local FieldPerspective = require("sysmickit.fieldperspective")
+local FieldZones = require("sysmickit.fieldzones")
 local TDefendZone = require("tactics.TDefendZone")
-local Defense221 = {}
+local TheirKickOff = {}
 
-Defense221.__index = Defense221
+TheirKickOff.__index = TheirKickOff
 
-function Defense221.new(team_setting)
-    local self = setmetatable({}, Defense221)
+function TheirKickOff.new(team_setting)
+    local self = setmetatable({}, TheirKickOff)
     self.team = team_setting.team
     self.robots = {}
     self.robots_ids = team_setting.robots_ids -- Id de robots del campo
@@ -27,19 +28,22 @@ function Defense221.new(team_setting)
     local midfielder_zones = FieldPerspective.get_midfield_zone()
     self.midfielder_0_zone = midfielder_zones[1]
     self.midfielder_1_zone = midfielder_zones[2]
+    -- Generar posiciones aleatorias de defensa para cada robot
+    local defensive_zones = FieldPerspective.get_defensive_zones(team_setting.play_side)
+    self.positions = {}
+    for i=1, #self.robots do
+        -- alternar entre zonas defensivas
+        local zone = defensive_zones[((i-1) % #defensive_zones) + 1]
+        self.positions[i] = FieldZones.random_point_in_zone(zone)
+    end
 
     return self
 end
 
-function Defense221:process()
-    -- Two defenders back
-    TDefendZone.process(self.robots[1].id , self.team, self.defender_0_zone)
-    TDefendZone.process(self.robots[2].id , self.team, self.defender_1_zone)
-    -- Two Midfields
-    TDefendZone.process(self.robots[3].id , self.team, self.midfielder_0_zone )
-    TDefendZone.process(self.robots[4].id , self.team, self.midfielder_1_zone )
-
-
+function TheirKickOff:process()
+    for i, robot in ipairs(self.robots) do
+        robot:Move(self.positions[i])
+    end
 end
 
-return Defense221
+return TheirKickOff

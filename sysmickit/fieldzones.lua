@@ -135,6 +135,20 @@ function FieldZones.get_enemy_in_zone(zone, enemies)
     return inside
 end
 
+function FieldZones.get_robot_in_zone(zone, enemies)
+    assert(zone ~= nil, "Zone is nil")
+    assert(type(zone) == "table", "Zone is not a table")
+    local inside = {}
+    for _, enemy in ipairs(enemies) do
+        local point = { x = enemy.x, y = enemy.y }
+        if FieldZones.is_in_zone(point, zone) then
+            table.insert(inside, enemy)
+        end
+    end
+
+    return inside
+end
+
 
 
 return FieldZones

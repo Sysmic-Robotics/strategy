@@ -41,9 +41,9 @@ function utils.has_captured_ball(robot, ball)
     local y_local = to_ball:dot(right)   -- sideways component
 
     -- Parameters for the rectangular capture zone
-    local robot_radius = 0.068 -- radius of the dribbler
+    local robot_radius = 0.07 -- radius of the dribbler
     local offset       = robot_radius       -- where the rectangle starts
-    local length       = 0.01              -- how far forward from offset 0.3 default
+    local length       = 0.03              -- how far forward from offset 0.3 default
     local half_width   = 0.05               -- ± sideways from center
 
     -- Check if the ball is inside the forward rectangle
@@ -178,6 +178,21 @@ function utils.is_path_clear(start, goal, obstacles, clearance)
 end
 
 
+--- Returns the first robot found inside the center circle (radius 0.5 at position 0,0)
+--- @param robots table A list of robots (each with .x and .y)
+--- @return table|nil The robot inside the circle or nil if none
+function utils.get_robot_in_center_circle(robots)
+    local radius_sq = 0.45 * 0.45  -- 0.5 meters radius squared
+
+    for _, robot in ipairs(robots) do
+        local dist_sq = robot.x * robot.x + robot.y * robot.y
+        if dist_sq <= radius_sq then
+            return robot
+        end
+    end
+
+    return nil
+end
 
 
 

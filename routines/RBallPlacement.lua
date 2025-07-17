@@ -31,7 +31,7 @@ function RBallPlacement:process(game_state)
                 local angle = math.atan(dy, dx)
                 local safe_x = ball.x + math.cos(angle) * ESCAPE_DIST
                 local safe_y = ball.y + math.sin(angle) * ESCAPE_DIST
-                robot:MoveDirect({x = safe_x, y = safe_y})
+                robot:Move({x = safe_x, y = safe_y})
             else
                 robot:Stop()
             end

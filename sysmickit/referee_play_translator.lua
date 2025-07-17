@@ -1,97 +1,44 @@
-local RHalt = require("routines.RHalt")
-local RStop = require("routines.RStop")
-local RDefendPos = require("routines.RDefendPos")
-local RKickoffWait = require("routines.RKickOff")
-local RBallPlacement = require("routines.RBallPlacement")
-
 local M = {}
 
 function M.referee_play_translator(ref_command, team_setting)
-    local my_team = team_setting.team  
+    local my_team = team_setting.team
 
     if ref_command == "HALT" then
-        return RHalt.new(team_setting)
-
+        return "HALT"
     elseif ref_command == "STOP" then
-        return RStop.new(team_setting)
-
-    elseif ref_command == "BALL_PLACEMENT_YELLOW" then
-        if my_team == 1 then
-            return RBallPlacement.new(team_setting)
-        else
-            return RBallPlacement.new(team_setting)
-        end
-
-    elseif ref_command == "BALL_PLACEMENT_BLUE" then
-        if my_team == 0 then
-            return RBallPlacement.new(team_setting)
-        else
-            return RBallPlacement.new(team_setting)
-        end
-
+        return "STOP"
+    elseif ref_command == "FORCE_START" then
+        return "PLAY"
+    elseif ref_command == "NORMAL_START" then
+        return "NORMAL_START"
     elseif ref_command == "PREPARE_KICKOFF_YELLOW" then
         if my_team == 1 then
-            return RKickoffWait.new(team_setting)
+            return "OUR_PREPARE_KICK_OFF"
         else
-            return RDefendPos.new(team_setting)
+            return "THEIR_PREPARE_KICK_OFF"
         end
-
+    
     elseif ref_command == "PREPARE_KICKOFF_BLUE" then
         if my_team == 0 then
-            return RKickoffWait.new(team_setting)
+            return "OUR_PREPARE_KICK_OFF"
         else
-            return RDefendPos.new(team_setting)
+            return "THEIR_PREPARE_KICK_OFF"
         end
-
-    elseif ref_command == "PREPARE_PENALTY_YELLOW" then
-        return RDefendPos.new(team_setting)
-
-    elseif ref_command == "PREPARE_PENALTY_BLUE" then
-        return RDefendPos.new(team_setting)
-
-    elseif ref_command == "DIRECT_FREE_YELLOW" then
+    elseif ref_command == "PREPARE_KICKOFF_YELLOW" then
         if my_team == 1 then
-            return nil
+            return "OUR_PREPARE_KICK_OFF"
         else
-            return RDefendPos.new(team_setting)
+            return "THEIR_PREPARE_KICK_OFF"
         end
-
-    elseif ref_command == "DIRECT_FREE_BLUE" then
-        if my_team == 0 then
-            return nil
-        else
-            return RDefendPos.new(team_setting)
-        end
-
-    elseif ref_command == "INDIRECT_FREE_YELLOW" then
-        if my_team == 1 then
-            return nil
-        else
-            return RDefendPos.new(team_setting)
-        end
-
-    elseif ref_command == "INDIRECT_FREE_BLUE" then
-        if my_team == 0 then
-            return nil
-        else
-            return RDefendPos.new(team_setting)
-        end
-
-    elseif ref_command == "TIMEOUT_YELLOW" then
-        return RDefendPos.new(team_setting)
-
-    elseif ref_command == "TIMEOUT_BLUE" then
-        return RDefendPos.new(team_setting)
-
-    elseif ref_command == "GOAL_YELLOW" then
-        return RDefendPos.new(team_setting)
-
-    elseif ref_command == "GOAL_BLUE" then
-        return RDefendPos.new(team_setting)
-
+    elseif ref_command == "TIME_OUT_BLUE" then
+        return "TIME_OUT"
+    elseif ref_command == "TIME_OUT_YELLOW" then
+        return "TIME_OUT"
     else
-        return nil  
+        return "PLAY"
     end
+
 end
+
 
 return M
