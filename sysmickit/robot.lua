@@ -93,4 +93,5 @@ function Robot:Stop()
     Stop.process(self.id, self.team)
     return true
 end
+
 return Robot
