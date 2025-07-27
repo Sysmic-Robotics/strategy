@@ -47,8 +47,11 @@ function process()
     if game_state == "PLAY" then
         -- Aqui las plays normales
         TGoalkeeper.process(TEAM_SETTING.goalkeeper_id, TEAM_SETTING.team, TEAM_SETTING.play_side)
-        --defensive_play:process()
-        attack_dummy:process()
+        if WORLD:get_ball().x > 0 then
+            defensive_play:process()
+        else
+            attack_dummy:process()
+        end
     elseif game_state == "TIME_OUT" then
         baile:process()
     elseif game_state == "BALL_PLACEMENT" then
