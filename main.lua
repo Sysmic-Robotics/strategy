@@ -69,6 +69,6 @@ function process()
         halt:process()
     end
 
-    
+--permite probar el robot en el campo
 
 end
